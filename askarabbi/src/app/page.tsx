@@ -1,102 +1,180 @@
+'use client';
+
+import { useState } from 'react';
 import Image from "next/image";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [question, setQuestion] = useState('');
+  const [answer, setAnswer] = useState<null | {
+    tanakh: string;
+    talmud?: string;
+    web?: string;
+  }>(null);
+  const [includeTalmud, setIncludeTalmud] = useState(false);
+  const [includeWeb, setIncludeWeb] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!question.trim()) return;
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch('/api/question', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          question: question.trim(),
+          includeTalmud,
+          includeWeb,
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'שגיאה בעיבוד השאלה');
+      }
+      
+      setAnswer(data.answer);
+    } catch (error) {
+      console.error('Error fetching answer:', error);
+      setError(error instanceof Error ? error.message : 'שגיאה לא ידועה');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#f7f4e9] text-[#34210b] flex flex-col">
+      {/* Header */}
+      <header className="p-4 bg-[#0d3677] text-white text-center">
+        <h1 className="text-2xl sm:text-3xl font-bold">שאלות ותשובות יהודיות</h1>
+        <p className="mt-2">במה אפשר לעזור?</p>
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-1 container mx-auto p-4 max-w-3xl">
+        {/* Question Form */}
+        <form onSubmit={handleSubmit} className="mb-8 mt-4">
+          <div className="relative mb-4">
+            <textarea
+              className="w-full p-4 pb-14 rounded-lg border-2 border-[#0d3677] bg-white text-right resize-none h-32 placeholder:text-gray-500"
+              placeholder="שאל שאלה על היהדות..."
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            
+            {/* Toggle Options - Now at the bottom of the text box */}
+            <div className="absolute bottom-3 right-3 flex gap-2">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="talmud-toggle"
+                  checked={includeTalmud}
+                  onChange={() => setIncludeTalmud(!includeTalmud)}
+                  className="hidden"
+                />
+                <label
+                  htmlFor="talmud-toggle"
+                  className={`${
+                    includeTalmud ? 'bg-[#4b78c9] text-white' : 'bg-white text-[#0d3677]'
+                  } border border-[#0d3677] px-3 py-1 rounded-full cursor-pointer transition-colors text-sm`}
+                >
+                  תלמוד
+                </label>
+              </div>
+              
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="web-toggle"
+                  checked={includeWeb}
+                  onChange={() => setIncludeWeb(!includeWeb)}
+                  className="hidden"
+                />
+                <label
+                  htmlFor="web-toggle"
+                  className={`${
+                    includeWeb ? 'bg-[#4b78c9] text-white' : 'bg-white text-[#0d3677]'
+                  } border border-[#0d3677] px-3 py-1 rounded-full cursor-pointer transition-colors text-sm`}
+                >
+                  חיפוש ברשת
+                </label>
+              </div>
+            </div>
+          </div>
+          
+          {/* Submit Button */}
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={isLoading || !question.trim()}
+              className={`${
+                isLoading || !question.trim() ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#072656]'
+              } bg-[#0d3677] text-white px-6 py-3 rounded-full font-bold transition-colors`}
+            >
+              {isLoading ? 'מחפש תשובה...' : 'שלח'}
+            </button>
+          </div>
+        </form>
+
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-50 text-red-700 p-4 rounded-lg mb-6 border border-red-200 text-right">
+            <h3 className="font-bold mb-2">שגיאה:</h3>
+            <p>{error}</p>
+          </div>
+        )}
+
+        {/* Answer Display Area */}
+        {answer && (
+          <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <div className="mb-4 p-3 bg-[#f7f4e9] rounded">
+              <h3 className="text-lg font-bold mb-2">השאלה שלך:</h3>
+              <p>{question}</p>
+            </div>
+            
+            <div className="space-y-6">
+              {/* Tanakh Answer - Always shown */}
+              <div className="border-r-4 border-[#0d3677] pr-4">
+                <h3 className="text-xl font-bold mb-2 text-[#0d3677]">מהתנ&quot;ך</h3>
+                <p className="leading-relaxed">{answer.tanakh}</p>
+              </div>
+              
+              {/* Talmud Answer - Conditional */}
+              {answer.talmud && (
+                <div className="border-r-4 border-[#7a5901] pr-4">
+                  <h3 className="text-xl font-bold mb-2 text-[#7a5901]">מהתלמוד</h3>
+                  <p className="leading-relaxed">{answer.talmud}</p>
+                </div>
+              )}
+              
+              {/* Web Answer - Conditional */}
+              {answer.web && (
+                <div className="border-r-4 border-[#2a6b31] pr-4">
+                  <h3 className="text-xl font-bold mb-2 text-[#2a6b31]">מהרשת</h3>
+                  <p className="leading-relaxed">{answer.web}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+        
+        {/* Disclaimer */}
+        <div className="text-center text-sm text-gray-600 mt-8">
+          <p>יישום זה אינו תחליף להתייעצות אישית עם רב</p>
+          <p>לשאלות מורכבות או רגישות, אנא פנה לרב בקהילתך</p>
         </div>
       </main>
       <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+
       </footer>
     </div>
   );
