@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Image from "next/image";
+// import Image from "next/image"; // Removed unused import
 
 export default function Home() {
   const [question, setQuestion] = useState('');
@@ -9,6 +9,7 @@ export default function Home() {
     tanakh: string;
     talmud?: string;
     web?: string;
+    summary?: string;
   }>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -118,6 +119,14 @@ export default function Home() {
                 <div className="border-r-4 border-[#2a6b31] pr-4">
                   <h3 className="text-xl font-bold mb-2 text-[#2a6b31]">ממקורות מודרניים</h3>
                   <p className="leading-relaxed">{answer.web}</p>
+                </div>
+              )}
+              
+              {/* Summary Answer - Conditional based on existence in response */}
+              {answer.summary && (
+                <div className="border-r-4 border-gray-500 pr-4 mt-6 pt-4 border-t border-gray-200">
+                  <h3 className="text-xl font-bold mb-2 text-gray-700">לסיכום</h3>
+                  <p className="leading-relaxed">{answer.summary}</p>
                 </div>
               )}
             </div>

@@ -14,6 +14,7 @@ interface StructuredAnswer {
   tanakh: string;
   talmud: string;
   web: string;
+  summary?: string;
 }
 
 // Define the structure for the request (no longer needed externally)
@@ -69,6 +70,7 @@ export function getJewishSystemPrompt(): string {
   תשובה מהתנ"ך: (חובה) הצג פסוקים רלוונטיים מהתנ"ך (תורה, נביאים, כתובים). אם אין פסוק ישיר, ציין זאת.
   תשובה מהתלמוד וההלכה: (חובה) הצג מקורות מהתלמוד, מהשולחן ערוך (בעיקר אורח חיים לתפילין), ומפוסקים מרכזיים המסבירים את ההלכה.
   ממקורות מודרניים: (אם רלוונטי) הצג התייחסויות של פוסקים בני זמננו או מאמרים ממקורות רלוונטיים ומוסמכים מהעת החדשה, כולל אזכור אתרים רלוונטיים אם המידע ידוע לך ואמין.
+  לסיכום: (חובה) סכם את התשובה בקצרה.
   
   היה מדויק בציטוטים ובמראי מקום. הדגש את ההלכה הפסוקה והמקובלת. כבד את קדושת הטקסטים.`;
 }
@@ -86,6 +88,7 @@ export async function queryGroqAPI(question: string): Promise<{
   tanakh: string;
   talmud?: string;
   web?: string;
+  summary?: string;
 }> {
   // Create the system prompt
   const systemPrompt = getJewishSystemPrompt();
@@ -116,7 +119,7 @@ export async function queryGroqAPI(question: string): Promise<{
     const chatCompletion = await groq.chat.completions.create({
       messages: messages,
       model: groqConfig.models.premium,
-      temperature: 0.123,
+      temperature: 0.001,
       max_tokens: groqConfig.defaultMaxTokens, 
       stream: false, 
     });
@@ -158,7 +161,7 @@ export async function queryGroqAPI(question: string): Promise<{
  * @returns {Object} The structured answer
  */
 export function parseGroqResponse(content: string | null): StructuredAnswer {
-  const result: StructuredAnswer = { tanakh: '', talmud: '', web: '' };
+  const result: StructuredAnswer = { tanakh: '', talmud: '', web: '', summary: '' };
   if (!content) {
     console.warn("Received null or empty content from Groq API.");
     return result; // Return empty structure if no content
@@ -171,6 +174,7 @@ export function parseGroqResponse(content: string | null): StructuredAnswer {
     tanakh: ['תשובה מהתנ"ך', 'Tanakh Answer'],
     talmud: ['תשובה מהתלמוד וההלכה', 'Talmud and Halacha Answer'],
     web: ['ממקורות מודרניים', 'Modern Sources'],
+    summary: ['לסיכום', 'Summary'],
     // Add more potential variations if needed
   };
 
@@ -196,84 +200,105 @@ export function parseGroqResponse(content: string | null): StructuredAnswer {
   const tanakhIndex = findMarkerIndex(content, markers.tanakh);
   const talmudIndex = findMarkerIndex(content, markers.talmud);
   const webIndex = findMarkerIndex(content, markers.web);
+  const summaryIndex = findMarkerIndex(content, markers.summary);
 
   // Function to extract section content based on indices
-  const extractSection = (startIndex: number, nextIndex: number): string => {
-    if (startIndex === -1) return '';
+  // const extractSection = (startIndex: number, nextSectionIndices: (number | undefined)[]): string => { // This function is unused
+  //   if (startIndex === -1) return '';
+  //
+  //   // Find the closest next section index that is greater than startIndex
+  //   let endIndex = content.length;
+  //   for (const nextIndex of nextSectionIndices) {
+  //     if (nextIndex !== undefined && nextIndex > startIndex && nextIndex < endIndex) {
+  //       endIndex = nextIndex;
+  //     }
+  //   }
+  //   // Find the actual start of the content after the marker
+  //   const markerEndPosition = content.indexOf(':', startIndex);
+  //   const actualStartIndex = markerEndPosition !== -1 ? markerEndPosition + 1 : startIndex;
+  //   
+  //   return content.substring(actualStartIndex, endIndex).trim();
+  // };
 
-    // Find the end of the *marker text itself* within its line
-    const lineEndIndex = content.indexOf('\n', startIndex);
-    const currentLine = content.substring(startIndex, lineEndIndex === -1 ? content.length : lineEndIndex);
-    
-    // Find the actual end of the marker (including potential markdown/colon)
-    let markerEndIndex = startIndex;
-    const markerMatch = currentLine.match(/(?:\*\*)?.*?(:|\*\*)/); // Match up to the first colon or closing markdown
-    if (markerMatch && markerMatch[0]) {
-      markerEndIndex = startIndex + markerMatch[0].length;
-    } else {
-      // Fallback if no colon/markdown found, just use the start index + a reasonable length
-      // This might need refinement based on observed marker patterns
-      markerEndIndex = startIndex + 5; // Assume a short marker if pattern fails
+  // Extract content for each section
+  // Ensure indices are sorted to handle out-of-order markers correctly
+  const allIndices = [
+    { name: 'tanakh', index: tanakhIndex, keys: markers.tanakh },
+    { name: 'talmud', index: talmudIndex, keys: markers.talmud },
+    { name: 'web', index: webIndex, keys: markers.web },
+    { name: 'summary', index: summaryIndex, keys: markers.summary },
+  ].filter(s => s.index !== -1).sort((a, b) => a.index - b.index);
+
+  for (let i = 0; i < allIndices.length; i++) {
+    const currentSection = allIndices[i];
+    const nextSection = allIndices[i + 1];
+    const endIndex = nextSection ? nextSection.index : content.length;
+
+    // Find the actual start of the content after the marker
+    // This logic attempts to find the end of the marker phrase itself.
+    let actualContentStartIndex = currentSection.index;
+    for (const key of currentSection.keys) {
+        // Escape the key for regex
+        const escapeRegex = (str: string) => str.replace(/[*+?^${}()|[\]\\]/g, '\\$&');
+        const escapedKey = escapeRegex(key);
+        const regex = new RegExp(`(?:\\*\\*)?${escapedKey}(?:\\*\\*)?:?`, 'i');
+        const match = content.substring(currentSection.index, endIndex).match(regex);
+        if (match && match[0]) {
+            actualContentStartIndex = currentSection.index + match[0].length;
+            break;
+        }
     }
 
-    // Content starts *after* the marker text on that line, or on the next line
-    let contentStartIndex = markerEndIndex;
-    // Skip potential list numbers like '1.', '2.' etc. and whitespace after the marker
-    const remainingLine = content.substring(markerEndIndex, lineEndIndex === -1 ? content.length : lineEndIndex);
-    const contentMatch = remainingLine.match(/^\s*\d*\.?\s*(.*)/);
-    if (contentMatch && contentMatch[1]) {
-        // Content starts after number/space on the same line
-        contentStartIndex = markerEndIndex + (remainingLine.length - contentMatch[1].length);
-    } else if (lineEndIndex !== -1) {
-        // Content starts on the next line
-        contentStartIndex = lineEndIndex + 1;
-    } // else: marker is the last thing in the content
+    let sectionContent = content.substring(actualContentStartIndex, endIndex).trim();
 
-    const endIndex = nextIndex === -1 ? content.length : nextIndex;
-    let section = content.substring(contentStartIndex, endIndex).trim();
+    // Special handling for web and summary
+    if (currentSection.name === 'web') {
+        if (summaryIndex !== -1 && summaryIndex > currentSection.index && summaryIndex < endIndex) {
+            // Summary is part of this "web" block, extract it
+            const summaryMarkerEndPosition = content.indexOf(':', summaryIndex) !== -1 ? content.indexOf(':', summaryIndex) +1 : summaryIndex;
+            let summaryActualContentStartIndex = summaryMarkerEndPosition;
+            // Similar to above, find the end of the summary marker phrase
+            for (const key of markers.summary) {
+                const escapeRegex = (str: string) => str.replace(/[*+?^${}()|[\]\\]/g, '\\$&');
+                const escapedKey = escapeRegex(key);
+                const regex = new RegExp(`(?:\\*\\*)?${escapedKey}(?:\\*\\*)?:?`, 'i');
+                const match = content.substring(summaryIndex, endIndex).match(regex);
+                if (match && match[0]) {
+                    summaryActualContentStartIndex = summaryIndex + match[0].length;
+                    break;
+                }
+            }
 
-    // Clean up potential leading/trailing markdown or extra spaces left from splitting
-    section = section.replace(/^\*\*|\*\*$/g, '').trim();
-    return section;
-  };
-
-  // Order indices to extract sections correctly
-  const indices = [
-    { key: 'tanakh', index: tanakhIndex },
-    { key: 'talmud', index: talmudIndex },
-    { key: 'web', index: webIndex },
-  ]
-  .filter(item => item.index !== -1) // Keep only found markers
-  .sort((a, b) => a.index - b.index); // Sort by appearance order
-
-  for (let i = 0; i < indices.length; i++) {
-    const current = indices[i];
-    const next = indices[i + 1];
-    const sectionContent = extractSection(current.index, next ? next.index : -1);
-    
-    // Assign to the correct key in the result object
-    if (current.key === 'tanakh') result.tanakh = sectionContent;
-    else if (current.key === 'talmud') result.talmud = sectionContent;
-    else if (current.key === 'web') result.web = sectionContent;
+            result.summary = content.substring(summaryActualContentStartIndex, endIndex).trim();
+            sectionContent = content.substring(actualContentStartIndex, summaryIndex).trim(); // Web is up to summary
+        }
+    }
+    // Assign to the correct field in result, avoid assigning summary again if handled above
+    if (currentSection.name === 'tanakh') result.tanakh = sectionContent;
+    else if (currentSection.name === 'talmud') result.talmud = sectionContent;
+    else if (currentSection.name === 'web' && !(summaryIndex !== -1 && summaryIndex > currentSection.index && summaryIndex < endIndex) ) {
+        // only assign to web if summary was not part of it
+        result.web = sectionContent;
+    } else if (currentSection.name === 'summary' && !result.summary) {
+        // if summary is its own distinct section and not yet parsed
+        result.summary = sectionContent;
+    }
+  }
+  
+  // Fallback if summary was intended as part of "web" but not correctly split by new logic (e.g. if "לסיכום" is not present)
+  // This part tries to catch the summary if it's at the end of the web section by a common pattern
+  // This is a bit fragile and depends on the LLM's consistency.
+  if (!result.summary && result.web) {
+      const summaryPattern = /\n\n(לסיכום[\s\S]*?)$/; // Matches 'לסיכום' after a double newline at the end, using [\s\S] instead of s flag
+      const webMatch = result.web.match(summaryPattern);
+      if (webMatch && webMatch[1]) {
+          result.summary = webMatch[1].trim();
+          result.web = result.web.substring(0, result.web.lastIndexOf(webMatch[1])).trim();
+      }
   }
 
-  if (!result.tanakh && !result.talmud && !result.web) {
-     console.warn("Could not find any known section markers in Groq response. Returning raw content in 'talmud' field as fallback.");
-     // Fallback: Assign the whole content to one field if no markers found
-     // Decide which field makes most sense, e.g., 'talmud' or a new 'raw' field
-     result.talmud = content.trim(); 
-     // Alternatively: result.raw = content.trim(); // Requires updating interface
-  }
-  else if (!result.tanakh) {
-    console.warn("Tanakh section not found in Groq response after parsing.");
-  }
-  if (!result.talmud) {
-     console.warn("Talmud/Halacha section not found in Groq response after parsing.");
-  }
-   if (!result.web) {
-     console.warn("Modern sources section not found in Groq response after parsing.");
-  }
+  console.log("Parsed result (SDK version with summary):");
+  console.dir(result, { depth: null });
 
-  console.log("Parsed result (SDK version):", result);
   return result;
 } 
