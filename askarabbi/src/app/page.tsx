@@ -10,8 +10,6 @@ export default function Home() {
     talmud?: string;
     web?: string;
   }>(null);
-  const [includeTalmud, setIncludeTalmud] = useState(false);
-  const [includeWeb, setIncludeWeb] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,8 +29,6 @@ export default function Home() {
         },
         body: JSON.stringify({
           question: question.trim(),
-          includeTalmud,
-          includeWeb,
         }),
       });
       
@@ -65,50 +61,11 @@ export default function Home() {
         <form onSubmit={handleSubmit} className="mb-8 mt-4">
           <div className="relative mb-4">
             <textarea
-              className="w-full p-4 pb-14 rounded-lg border-2 border-[#0d3677] bg-white text-right resize-none h-32 placeholder:text-gray-500"
+              className="w-full p-4 pb-4 rounded-lg border-2 border-[#0d3677] bg-white text-right resize-none h-32 placeholder:text-gray-500"
               placeholder="שאל שאלה על היהדות..."
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
             />
-            
-            {/* Toggle Options - Now at the bottom of the text box */}
-            <div className="absolute bottom-3 right-3 flex gap-2">
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="talmud-toggle"
-                  checked={includeTalmud}
-                  onChange={() => setIncludeTalmud(!includeTalmud)}
-                  className="hidden"
-                />
-                <label
-                  htmlFor="talmud-toggle"
-                  className={`${
-                    includeTalmud ? 'bg-[#4b78c9] text-white' : 'bg-white text-[#0d3677]'
-                  } border border-[#0d3677] px-3 py-1 rounded-full cursor-pointer transition-colors text-sm`}
-                >
-                  תלמוד
-                </label>
-              </div>
-              
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="web-toggle"
-                  checked={includeWeb}
-                  onChange={() => setIncludeWeb(!includeWeb)}
-                  className="hidden"
-                />
-                <label
-                  htmlFor="web-toggle"
-                  className={`${
-                    includeWeb ? 'bg-[#4b78c9] text-white' : 'bg-white text-[#0d3677]'
-                  } border border-[#0d3677] px-3 py-1 rounded-full cursor-pointer transition-colors text-sm`}
-                >
-                  חיפוש ברשת
-                </label>
-              </div>
-            </div>
           </div>
           
           {/* Submit Button */}
@@ -116,7 +73,7 @@ export default function Home() {
             <button
               type="submit"
               disabled={isLoading || !question.trim()}
-              className={`${
+              className={`${ 
                 isLoading || !question.trim() ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#072656]'
               } bg-[#0d3677] text-white px-6 py-3 rounded-full font-bold transition-colors`}
             >
@@ -148,18 +105,18 @@ export default function Home() {
                 <p className="leading-relaxed">{answer.tanakh}</p>
               </div>
               
-              {/* Talmud Answer - Conditional */}
+              {/* Talmud Answer - Conditional based on existence in response */}
               {answer.talmud && (
                 <div className="border-r-4 border-[#7a5901] pr-4">
-                  <h3 className="text-xl font-bold mb-2 text-[#7a5901]">מהתלמוד</h3>
+                  <h3 className="text-xl font-bold mb-2 text-[#7a5901]">מהתלמוד וההלכה</h3>
                   <p className="leading-relaxed">{answer.talmud}</p>
                 </div>
               )}
               
-              {/* Web Answer - Conditional */}
+              {/* Web Answer - Conditional based on existence in response */}
               {answer.web && (
                 <div className="border-r-4 border-[#2a6b31] pr-4">
-                  <h3 className="text-xl font-bold mb-2 text-[#2a6b31]">מהרשת</h3>
+                  <h3 className="text-xl font-bold mb-2 text-[#2a6b31]">ממקורות מודרניים</h3>
                   <p className="leading-relaxed">{answer.web}</p>
                 </div>
               )}
