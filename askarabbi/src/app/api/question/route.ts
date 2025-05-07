@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { queryGroqAPI } from '@/utils/groq';
+import { queryAIAPI } from '@/utils/ai';
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Query Groq API with the question (options are handled internally now)
-    const answer = await queryGroqAPI(question);
+    const answer = await queryAIAPI(question);
 
     // Return the answer as JSON
     return NextResponse.json({ answer });

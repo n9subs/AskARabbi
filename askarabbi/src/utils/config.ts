@@ -3,6 +3,7 @@
  */
 
 // Groq configuration (used by SDK)
+/*
 export const groqConfig = {
   models: {
     default: 'llama3-70b-8192',
@@ -13,6 +14,7 @@ export const groqConfig = {
   defaultMaxTokens: 8192,
   // SDK reads GROQ_API_KEY from process.env by default
 };
+*/
 
 // Application configuration
 export const appConfig = {
@@ -25,7 +27,7 @@ export const appConfig = {
 
 // Export combined configuration
 const config = {
-  groq: groqConfig,
+  // groq: groqConfig, // Removed Groq config
   app: appConfig,
 };
 

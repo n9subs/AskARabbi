@@ -4,10 +4,10 @@
  * This file provides utility functions for interacting with the Groq API
  * to generate answers to Jewish questions.
  */
-import Groq from 'groq-sdk';
-// Attempting explicit type import
-import type { ChatCompletionCreateParams } from 'groq-sdk/resources/chat/completions';
-import { groqConfig } from './config';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+// import Groq from 'groq-sdk'; // Removed Groq import
+// import type { ChatCompletionCreateParams } from 'groq-sdk/resources/chat/completions'; // Removed Groq import
+// import { groqConfig } from './config'; // Removed Groq config import
 
 // Define the structure for the response
 interface StructuredAnswer {
@@ -20,19 +20,22 @@ interface StructuredAnswer {
 // Define the structure for the request (no longer needed externally)
 // interface GroqRequestOptions { ... }
 
-// Instantiate the Groq client
-// The SDK automatically uses the GROQ_API_KEY environment variable.
-let groq: Groq;
-try {
-  groq = new Groq();
+// Instantiate the Google GenAI client
+let genAI: GoogleGenerativeAI;
+if (process.env.GEMINI_API_KEY) {
+  try {
+    genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 } catch (e) {
-  console.error("Failed to instantiate Groq client. Ensure GROQ_API_KEY is set.", e);
-  // Throw the error to prevent the application from proceeding without a valid key.
+    console.error("Failed to instantiate GoogleGenAI client. Ensure GEMINI_API_KEY is valid.", e);
   if (e instanceof Error) {
-    throw new Error(`Failed to instantiate Groq client: ${e.message}`);
+      throw new Error(`Failed to instantiate GoogleGenAI client: ${e.message}`);
   } else {
-    throw new Error("Failed to instantiate Groq client due to an unknown error.");
+      throw new Error("Failed to instantiate GoogleGenAI client due to an unknown error.");
+    }
   }
+} else {
+  console.error("GEMINI_API_KEY is not set.");
+  throw new Error("GEMINI_API_KEY is not set in environment variables.");
 }
 
 // Define interfaces (GroqRequestOptions is no longer needed externally)
@@ -84,71 +87,45 @@ export function getJewishSystemPrompt(): string {
  * @param {string} question - The question to ask
  * @returns {Promise<Object>} The structured answer
  */
-export async function queryGroqAPI(question: string): Promise<{
-  tanakh: string;
-  talmud?: string;
-  web?: string;
-  summary?: string;
-}> {
-  // Create the system prompt
-  const systemPrompt = getJewishSystemPrompt();
-  
-  // Log the request (for demo purposes)
-  console.log('Querying Groq API (SDK) with:', { question, systemPrompt });
-  
-  if (!groq) {
-    console.error("Groq client not initialized. Cannot proceed.");
-    throw new Error("Groq client failed to initialize.");
+export async function queryAIAPI(question: string): Promise<StructuredAnswer> {
+  if (!genAI) {
+    console.error("GoogleGenAI client not initialized. Cannot proceed.");
+    throw new Error("GoogleGenAI client failed to initialize. Check GEMINI_API_KEY.");
   }
 
+  const systemPrompt = getJewishSystemPrompt();
+  console.log('Querying Google GenAI with:', { question });
+
+  const modelName = 'gemini-1.5-flash-latest'; // Using a standard model, was 'gemini-2.5-pro-preview-05-06' in example, ensure this is available
+  const model = genAI.getGenerativeModel({
+    model: modelName,
+    systemInstruction: {
+      role: 'system',
+      parts: [{ text: systemPrompt }],
+    },
+    generationConfig: {
+        temperature: 0.1, // Adjusted for factual responses, was 0.001 in user file edit for groq
+        // maxOutputTokens: groqConfig.defaultMaxTokens, // This was from groqConfig, Gemini has different limits/defaults
+        responseMimeType: 'text/plain',
+    },
+    // tools: [{ googleSearch: {} }], // Enabling Google Search tool as in example - might require specific model support
+  });
+
   try {
-    // Prepare the messages for the SDK using the correct Message type
-    // Assuming ChatCompletionCreateParams has a nested Message type
-    const messages: ChatCompletionCreateParams['messages'] = [
-      {
-        role: 'system', 
-        content: systemPrompt
-      },
-      {
-        role: 'user', 
-        content: question
-      }
-    ];
-
-    // Call the API using the SDK
-    const chatCompletion = await groq.chat.completions.create({
-      messages: messages,
-      model: groqConfig.models.premium,
-      temperature: 0.001,
-      max_tokens: groqConfig.defaultMaxTokens, 
-      stream: false, 
-    });
-
-    // Extract and structure the response
-    const rawContent = chatCompletion.choices[0]?.message?.content || '';
-    console.log("Raw Groq response content (SDK):", rawContent);
-    return parseGroqResponse(rawContent);
+    const result = await model.generateContent(question);
+    const response = result.response;
+    const rawContent = response.text();
+    
+    console.log("Raw Google GenAI response content:", rawContent);
+    return parseAIResponse(rawContent); // Renamed from parseGroqResponse
 
   } catch (error: unknown) {
-    console.error('Error calling Groq SDK:', error);
-    // Simplified Error Handling for Linter
-    let errorMessage = 'An unknown error occurred during Groq SDK call.';
-    let errorStatus: number | string = 'N/A';
-
-    if (error instanceof Groq.APIError) {
-        errorStatus = error.status ?? 'N/A';
-        errorMessage = error.message ?? 'Unknown API Error'; 
-        console.error('Groq API Error Details:', { status: errorStatus, message: errorMessage });
-        throw new Error(`Groq API Error (${errorStatus}): ${errorMessage}`);
-    } else if (error instanceof Error) { 
+    console.error('Error calling Google GenAI SDK:', error);
+    let errorMessage = 'An unknown error occurred during Google GenAI SDK call.';
+    if (error instanceof Error) {
         errorMessage = error.message;
-        throw new Error(`Error processing Groq request: ${errorMessage}`);
-    } else { 
-        try {
-          errorMessage = String(error);
-        } catch { /* Ignore potential errors during string conversion */ }
-        throw new Error(errorMessage);
     }
+    throw new Error(`Error processing Google GenAI request: ${errorMessage}`);
   }
 }
 
@@ -160,14 +137,14 @@ export async function queryGroqAPI(question: string): Promise<{
  * @param {string} content - The content from the Groq API response
  * @returns {Object} The structured answer
  */
-export function parseGroqResponse(content: string | null): StructuredAnswer {
+export function parseAIResponse(content: string | null): StructuredAnswer { // Renamed from parseGroqResponse
   const result: StructuredAnswer = { tanakh: '', talmud: '', web: '', summary: '' };
   if (!content) {
-    console.warn("Received null or empty content from Groq API.");
+    console.warn("Received null or empty content from AI API.");
     return result; // Return empty structure if no content
   }
 
-  console.log("Attempting to parse content (SDK version):", content);
+  console.log("Attempting to parse content (AI version):", content);
 
   // Define markers with optional markdown and colon
   const markers = {
@@ -175,18 +152,12 @@ export function parseGroqResponse(content: string | null): StructuredAnswer {
     talmud: ['תשובה מהתלמוד וההלכה', 'Talmud and Halacha Answer'],
     web: ['ממקורות מודרניים', 'Modern Sources'],
     summary: ['לסיכום', 'Summary'],
-    // Add more potential variations if needed
   };
 
-  // Helper to find the starting index of any marker variation, ignoring markdown
   const findMarkerIndex = (text: string, markerKeys: string[]): number => {
-    // Function to escape special regex characters
-    const escapeRegex = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
-
+    const escapeRegex = (str: string) => str.replace(/[*+?^${}()|[\]\\]/g, '\\$&');
     for (const key of markerKeys) {
-      // Escape the key first
       const escapedKey = escapeRegex(key);
-      // Match variations like **Marker:** or Marker:
       const regex = new RegExp(`(?:\\*\\*)?${escapedKey}(?:\\*\\*)?:?`, 'i');
       const match = text.match(regex);
       if (match && match.index !== undefined) {
@@ -196,32 +167,11 @@ export function parseGroqResponse(content: string | null): StructuredAnswer {
     return -1;
   };
 
-  // Find indices of section starts
   const tanakhIndex = findMarkerIndex(content, markers.tanakh);
   const talmudIndex = findMarkerIndex(content, markers.talmud);
   const webIndex = findMarkerIndex(content, markers.web);
   const summaryIndex = findMarkerIndex(content, markers.summary);
 
-  // Function to extract section content based on indices
-  // const extractSection = (startIndex: number, nextSectionIndices: (number | undefined)[]): string => { // This function is unused
-  //   if (startIndex === -1) return '';
-  //
-  //   // Find the closest next section index that is greater than startIndex
-  //   let endIndex = content.length;
-  //   for (const nextIndex of nextSectionIndices) {
-  //     if (nextIndex !== undefined && nextIndex > startIndex && nextIndex < endIndex) {
-  //       endIndex = nextIndex;
-  //     }
-  //   }
-  //   // Find the actual start of the content after the marker
-  //   const markerEndPosition = content.indexOf(':', startIndex);
-  //   const actualStartIndex = markerEndPosition !== -1 ? markerEndPosition + 1 : startIndex;
-  //   
-  //   return content.substring(actualStartIndex, endIndex).trim();
-  // };
-
-  // Extract content for each section
-  // Ensure indices are sorted to handle out-of-order markers correctly
   const allIndices = [
     { name: 'tanakh', index: tanakhIndex, keys: markers.tanakh },
     { name: 'talmud', index: talmudIndex, keys: markers.talmud },
@@ -233,12 +183,8 @@ export function parseGroqResponse(content: string | null): StructuredAnswer {
     const currentSection = allIndices[i];
     const nextSection = allIndices[i + 1];
     const endIndex = nextSection ? nextSection.index : content.length;
-
-    // Find the actual start of the content after the marker
-    // This logic attempts to find the end of the marker phrase itself.
     let actualContentStartIndex = currentSection.index;
     for (const key of currentSection.keys) {
-        // Escape the key for regex
         const escapeRegex = (str: string) => str.replace(/[*+?^${}()|[\]\\]/g, '\\$&');
         const escapedKey = escapeRegex(key);
         const regex = new RegExp(`(?:\\*\\*)?${escapedKey}(?:\\*\\*)?:?`, 'i');
@@ -248,17 +194,11 @@ export function parseGroqResponse(content: string | null): StructuredAnswer {
             break;
         }
     }
-
     let sectionContent = content.substring(actualContentStartIndex, endIndex).trim();
-
-    // Special handling for web and summary
     if (currentSection.name === 'web') {
         if (summaryIndex !== -1 && summaryIndex > currentSection.index && summaryIndex < endIndex) {
-            // Summary is part of this "web" block, extract it
-            const summaryMarkerEndPosition = content.indexOf(':', summaryIndex) !== -1 ? content.indexOf(':', summaryIndex) +1 : summaryIndex;
-            let summaryActualContentStartIndex = summaryMarkerEndPosition;
-            // Similar to above, find the end of the summary marker phrase
-            for (const key of markers.summary) {
+            let summaryActualContentStartIndex = summaryIndex;
+             for (const key of markers.summary) {
                 const escapeRegex = (str: string) => str.replace(/[*+?^${}()|[\]\\]/g, '\\$&');
                 const escapedKey = escapeRegex(key);
                 const regex = new RegExp(`(?:\\*\\*)?${escapedKey}(?:\\*\\*)?:?`, 'i');
@@ -268,28 +208,21 @@ export function parseGroqResponse(content: string | null): StructuredAnswer {
                     break;
                 }
             }
-
             result.summary = content.substring(summaryActualContentStartIndex, endIndex).trim();
-            sectionContent = content.substring(actualContentStartIndex, summaryIndex).trim(); // Web is up to summary
+            sectionContent = content.substring(actualContentStartIndex, summaryIndex).trim();
         }
     }
-    // Assign to the correct field in result, avoid assigning summary again if handled above
     if (currentSection.name === 'tanakh') result.tanakh = sectionContent;
     else if (currentSection.name === 'talmud') result.talmud = sectionContent;
     else if (currentSection.name === 'web' && !(summaryIndex !== -1 && summaryIndex > currentSection.index && summaryIndex < endIndex) ) {
-        // only assign to web if summary was not part of it
         result.web = sectionContent;
     } else if (currentSection.name === 'summary' && !result.summary) {
-        // if summary is its own distinct section and not yet parsed
         result.summary = sectionContent;
     }
   }
   
-  // Fallback if summary was intended as part of "web" but not correctly split by new logic (e.g. if "לסיכום" is not present)
-  // This part tries to catch the summary if it's at the end of the web section by a common pattern
-  // This is a bit fragile and depends on the LLM's consistency.
   if (!result.summary && result.web) {
-      const summaryPattern = /\n\n(לסיכום[\s\S]*?)$/; // Matches 'לסיכום' after a double newline at the end, using [\s\S] instead of s flag
+      const summaryPattern = /\n\n(לסיכום[\s\S]*?)$/;
       const webMatch = result.web.match(summaryPattern);
       if (webMatch && webMatch[1]) {
           result.summary = webMatch[1].trim();
@@ -297,8 +230,12 @@ export function parseGroqResponse(content: string | null): StructuredAnswer {
       }
   }
 
-  console.log("Parsed result (SDK version with summary):");
-  console.dir(result, { depth: null });
+  // Fallback: If all sections are empty, put the whole content into tanakh
+  if (!result.tanakh && !result.talmud && !result.web && !result.summary && content) {
+    console.warn("No structured sections found in AI response. Using full content as Tanakh fallback.");
+    result.tanakh = content.trim(); 
+  }
 
+  console.log("Parsed AI Response:", result);
   return result;
 } 
