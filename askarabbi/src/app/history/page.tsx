@@ -13,7 +13,7 @@ import { usePostHog } from 'posthog-js/react';
 
 export default function HistoryPage() {
   const router = useRouter();
-  const { userId, isLoading: authLoading } = useAuth();
+  const { userId, isLoading: authLoading, signOut, userName, isAnonymousUser } = useAuth();
   const deleteItemMutation = useMutation(api.history.deleteItem);
   const posthog = usePostHog();
 
@@ -29,8 +29,7 @@ export default function HistoryPage() {
     if (posthog && userId) {
       posthog.capture('history_page_viewed');
     }
-    // Intentionally run only once on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [posthog, userId]);
 
   const handleDeleteClick = (historyItemId: Id<"history">) => {
@@ -79,20 +78,47 @@ export default function HistoryPage() {
 
   return (
     <RouteGuard>
-      <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] flex flex-col items-center p-4 sm:p-8">
-        <header className="w-full max-w-3xl mb-8 flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-[var(--primary)]">
-            היסטוריית שאלות
-          </h1>
-          <button 
-            onClick={() => router.push('/')}
-            className="px-4 py-2 bg-[var(--primary)] text-[var(--background)] rounded-md hover:bg-[var(--secondary)] transition-colors font-medium text-sm"
-          >
-            חזרה לדף הראשי
-          </button>
+      <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] dark:bg-[var(--background)] dark:text-[var(--foreground)] flex flex-col">
+        <header className="p-4 bg-[var(--primary)] text-[var(--background)]">
+          <div className="container mx-auto flex justify-between items-center">
+            <div className="text-sm flex-shrink-0">
+              בס&quot;ד
+            </div>
+
+            <div className="flex-grow text-center px-4">
+              <h1 className="text-2xl sm:text-3xl font-bold">היסטוריית שאלות</h1>
+              <p className="mt-1 text-xs sm:text-sm">שָׁאַלְתָּ&apos;רבָ</p>
+            </div>
+
+            <div className="flex-shrink-0">
+              {userId ? (
+                <div className="flex items-center space-x-2 space-x-reverse">
+                  <div className="text-xs sm:text-sm text-[var(--background)]">
+                    {isAnonymousUser ? "אורח" : userName || "טוען..."}
+                  </div>
+
+                  <button
+                    onClick={() => router.push("/")}
+                    className="px-2.5 py-1 bg-slate-200 text-[var(--primary)] rounded-md hover:bg-slate-300/80 transition-colors font-medium text-xs shadow-sm"
+                  >
+                    דף ראשי
+                  </button>
+
+                  <button
+                    onClick={() => { if (signOut) signOut(); router.push("/auth/sign-in"); }}
+                    className="px-2.5 py-1 bg-white text-[var(--primary)] rounded-md hover:bg-slate-100 transition-colors font-medium text-xs shadow-sm"
+                  >
+                    התנתק
+                  </button>
+                </div>
+              ) : (
+                <div className="h-[28px] w-[1px]">&nbsp;</div>
+              )}
+            </div>
+          </div>
         </header>
 
-        <main className="w-full max-w-3xl">
+        <main className="flex-1 container mx-auto p-4 max-w-3xl">
           {userHistory === undefined && !authLoading && (
             <div className="text-center py-10">
               <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-[var(--primary)] mx-auto mb-4"></div>
@@ -114,7 +140,7 @@ export default function HistoryPage() {
           {userHistory && userHistory.length > 0 && (
             <div className="space-y-4">
               {userHistory.map((item) => (
-                <HistoryItem 
+                <HistoryItem
                   key={item._id}
                   item={item}
                   onDeleteClick={handleDeleteClick}

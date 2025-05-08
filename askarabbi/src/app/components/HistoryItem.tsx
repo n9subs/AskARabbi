@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Id } from '../../../convex/_generated/dataModel';
+import Linkify from '@/utils/linkify';
 
 // Define the structure of the answer object based on schema
 interface AnswerObject {
@@ -70,31 +71,31 @@ const HistoryItem: React.FC<HistoryItemProps> = ({ item, onDeleteClick }) => {
       </div>
 
       {/* Collapsible Content: Answer Sections and Timestamp */}
-      <div className={`transition-all duration-500 ease-in-out overflow-hidden ${isExpanded ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+      <div className={`transition-all duration-500 ease-in-out overflow-hidden ${isExpanded ? 'max-h-none opacity-100' : 'max-h-0 opacity-0'}`}>
           {/* Structured Answer Display */}
           <div className="space-y-5 mb-4 pt-2">
             {item.answer.tanakh && (
               <div className="border-r-4 border-[#0d3677] pr-4">
                 <h4 className="text-lg font-bold mb-1.5 text-[#0d3677]">מהתנ&quot;ך</h4>
-                <p className="leading-relaxed text-gray-700 whitespace-pre-wrap">{item.answer.tanakh}</p>
+                <p className="leading-relaxed text-gray-700 whitespace-pre-wrap"><Linkify text={item.answer.tanakh}/></p>
               </div>
             )}
             {item.answer.talmud && (
               <div className="border-r-4 border-[#7a5901] pr-4">
                 <h4 className="text-lg font-bold mb-1.5 text-[#7a5901]">מהתלמוד וההלכה</h4>
-                <p className="leading-relaxed text-gray-700 whitespace-pre-wrap">{item.answer.talmud}</p>
+                <p className="leading-relaxed text-gray-700 whitespace-pre-wrap"><Linkify text={item.answer.talmud}/></p>
               </div>
             )}
             {item.answer.web && (
               <div className="border-r-4 border-[#2a6b31] pr-4">
                 <h4 className="text-lg font-bold mb-1.5 text-[#2a6b31]">ממקורות מודרניים</h4>
-                <p className="leading-relaxed text-gray-700 whitespace-pre-wrap">{item.answer.web}</p>
+                <p className="leading-relaxed text-gray-700 whitespace-pre-wrap"><Linkify text={item.answer.web}/></p>
               </div>
             )}
             {item.answer.summary && (
               <div className="border-r-4 border-gray-500 pr-4 mt-5 pt-3 border-t border-gray-200">
                 <h4 className="text-lg font-bold mb-1.5 text-gray-700">לסיכום</h4>
-                <p className="leading-relaxed text-gray-700 whitespace-pre-wrap">{item.answer.summary}</p>
+                <p className="leading-relaxed text-gray-700 whitespace-pre-wrap"><Linkify text={item.answer.summary}/></p>
               </div>
             )}
           </div>
