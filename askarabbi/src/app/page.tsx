@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useEffect, useRef, KeyboardEvent, FormEvent } from 'react';
+import { usePostHog } from 'posthog-js/react';
 // import Image from "next/image"; // Removed unused import
 
 export default function Home() {
+  const posthog = usePostHog();
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState<null | {
     questionAsked: string;
@@ -66,6 +68,14 @@ export default function Home() {
     
     if (!question.trim()) return;
     
+    // Track question submitted
+    if (posthog) {
+      posthog.capture('question_submitted', {
+        question_text: question.trim(),
+        submitted_at: new Date().toISOString(),
+      });
+    }
+    
     setIsLoading(true);
     setError(null);
     
@@ -83,10 +93,23 @@ export default function Home() {
       const data = await response.json();
       
       if (!response.ok) {
+        // Track submission error if needed, e.g., posthog.capture('question_submission_failed', { error: data.error });
         throw new Error(data.error || 'שגיאה בעיבוד השאלה');
       }
       
       setAnswer({ questionAsked: question.trim(), ...data.answer });
+
+      // Track answer received
+      if (posthog) {
+        posthog.capture('answer_received', {
+          question_asked: question.trim(),
+          has_tanakh_answer: !!data.answer?.tanakh,
+          has_talmud_answer: !!data.answer?.talmud,
+          has_web_answer: !!data.answer?.web,
+          has_summary: !!data.answer?.summary,
+          received_at: new Date().toISOString(),
+        });
+      }
     } catch (error) {
       console.error('Error fetching answer:', error);
       setError(error instanceof Error ? error.message : 'שגיאה לא ידועה');
@@ -100,6 +123,20 @@ export default function Home() {
     if (rememberDisclaimerPreference) {
       localStorage.setItem('hideAskARabbiDisclaimer', 'true');
       setHasUserOptedOutOfDisclaimer(true);
+      // Track disclaimer preference set
+      if (posthog) {
+        posthog.capture('disclaimer_preference_set', {
+          preference: 'hide',
+          set_at: new Date().toISOString(),
+        });
+      }
+    }
+    // Track disclaimer closed
+    if (posthog) {
+      posthog.capture('disclaimer_closed', {
+        remember_preference_checked: rememberDisclaimerPreference,
+        closed_at: new Date().toISOString(),
+      });
     }
   };
 
