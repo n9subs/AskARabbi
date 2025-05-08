@@ -179,6 +179,13 @@ export default function SignInPage() {
             </a>
           </p>
         </div>
+
+        <div className="text-center text-xs text-gray-500 mt-6 pt-4 border-t border-gray-200">
+          <p>מגבלת שימוש יומי:</p>
+          <p>משתמשים רשומים: 25 שאלות.</p>
+          <p>משתמשים אנונימיים: 5 שאלות.</p>
+        </div>
+
       </div>
     </div>
   );

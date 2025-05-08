@@ -6,12 +6,18 @@ import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import { usePostHog } from 'posthog-js/react';
 
+// Define limits (can be shared or fetched from config)
+const ANON_LIMIT = 5;
+const VERIFIED_LIMIT = 25;
+
 interface AuthContextType {
   userId: Id<"users"> | null;
   isLoading: boolean;
   userName: string | null;
   userEmail: string | null;
   isAnonymousUser: boolean;
+  dailyQuestionCount: number;
+  dailyLimit: number;
   signUp: (email: string, password: string, name?: string) => Promise<{ success: boolean; message?: string }>;
   login: (email: string, password: string) => Promise<void>;
   signInAnonymously: () => Promise<void>;
@@ -26,6 +32,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userName, setUserName] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [isAnonymousUser, setIsAnonymousUser] = useState(false);
+  const [dailyQuestionCount, setDailyQuestionCount] = useState(0);
+  const [dailyLimit, setDailyLimit] = useState(ANON_LIMIT);
   const posthog = usePostHog();
 
   const signUpMutation = useMutation(api.auth.signUp);
@@ -47,10 +55,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    let currentLimit = ANON_LIMIT;
+    let currentCount = 0;
+    let isAnon = false;
+
     if (userId && userProfile) {
       setUserName(userProfile.name || null);
       setUserEmail(userProfile.email || null);
-      setIsAnonymousUser(userProfile.isAnonymous || false);
+      isAnon = userProfile.isAnonymous || false;
+      setIsAnonymousUser(isAnon);
+
+      currentLimit = isAnon ? ANON_LIMIT : (userProfile.isEmailVerified ? VERIFIED_LIMIT : ANON_LIMIT);
+      
+      const now = Date.now();
+      const todayStart = new Date(now).setHours(0, 0, 0, 0);
+      const lastDateStart = userProfile.lastQuestionDate ? new Date(userProfile.lastQuestionDate).setHours(0, 0, 0, 0) : 0;
+      currentCount = (lastDateStart === todayStart) ? (userProfile.dailyQuestionCount ?? 0) : 0;
+      
+      setDailyLimit(currentLimit);
+      setDailyQuestionCount(currentCount);
       
       if (posthog) {
         posthog.identify(
@@ -58,7 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           {
             email: userProfile.email || undefined,
             name: userProfile.name || undefined,
-            isAnonymous: userProfile.isAnonymous || false
+            isAnonymous: isAnon
           }
         );
       }
@@ -67,6 +90,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
        setUserName(null);
        setUserEmail(null);
        setIsAnonymousUser(false);
+       setDailyQuestionCount(0);
+       setDailyLimit(ANON_LIMIT);
        if (posthog) {
           posthog.reset();
        }
@@ -80,6 +105,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUserName(null);
         setUserEmail(null);
         setIsAnonymousUser(false);
+        setDailyQuestionCount(0);
+        setDailyLimit(ANON_LIMIT);
     }
   };
 
@@ -162,6 +189,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         userName,
         userEmail,
         isAnonymousUser,
+        dailyQuestionCount,
+        dailyLimit,
         signUp,
         login,
         signInAnonymously,

@@ -9,7 +9,14 @@ import { useRouter } from "next/navigation";
 
 export default function Home() {
   const posthog = usePostHog();
-  const { userId, signOut, userName, isAnonymousUser } = useAuth();
+  const {
+    userId, 
+    signOut, 
+    userName, 
+    isAnonymousUser, 
+    dailyQuestionCount, // Get rate limit state
+    dailyLimit 
+  } = useAuth();
   const router = useRouter();
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState<null | {
@@ -67,6 +74,8 @@ export default function Home() {
       setShowDisclaimerPopup(true);
     }
   }, [answer, isLoading, hasUserOptedOutOfDisclaimer]);
+
+  const remainingQuestions = dailyLimit - dailyQuestionCount;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -222,6 +231,14 @@ export default function Home() {
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
               />
+              {/* Rate Limit Indicator */}
+              <div className="text-xs text-gray-500 text-left absolute bottom-2 right-3">
+                {remainingQuestions >= 0 ? 
+                  `שאלות נותרו להיום ${remainingQuestions} / ${dailyLimit} ` 
+                  : 
+                  `0 / ${dailyLimit} שאלות נותרו להיום`
+                }
+              </div>
             </div>
             
             {/* Submit Button */}

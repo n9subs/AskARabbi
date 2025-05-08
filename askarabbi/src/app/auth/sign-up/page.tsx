@@ -121,6 +121,12 @@ export default function SignUpPage() {
             </a>
           </p>
         </div>
+
+        <div className="text-center text-xs text-gray-500 mt-6 pt-4 border-t border-gray-200">
+          <p>שימו לב:</p>
+          <p>חשבונות מאומתים מקבלים 25 שאלות ביום.</p>
+          <p>משתמשים אנונימיים מוגבלים ל-5 שאלות ביום.</p>
+        </div>
       </div>
     </div>
   );

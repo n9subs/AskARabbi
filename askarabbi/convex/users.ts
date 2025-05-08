@@ -1,22 +1,62 @@
-import { query } from "./_generated/server";
+import { query, internalQuery, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
 
+// Public query for general profile display
 export const getUserProfile = query({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
-    if (!args.userId) {
-      return null;
-    }
+    if (!args.userId) return null;
     const user = await ctx.db.get(args.userId as Id<"users">);
-    if (!user) {
-      return null;
-    }
+    if (!user) return null;
+    
     return {
       name: user.name,
       email: user.email,
       isAnonymous: user.isAnonymous,
-      // We don't want to return everything, just what's needed for the profile display
+      isEmailVerified: user.isEmailVerified, // Needed for limit calculation
+      // Rate limiting info for display
+      dailyQuestionCount: user.dailyQuestionCount ?? 0,
+      lastQuestionDate: user.lastQuestionDate ?? 0,
     };
   },
+});
+
+// Internal query to get specific rate limit info (used by action)
+export const getInternalUserRateInfo = internalQuery({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+    if (!user) return null;
+    return {
+        _id: user._id,
+        isAnonymous: user.isAnonymous,
+        isEmailVerified: user.isEmailVerified,
+        dailyQuestionCount: user.dailyQuestionCount ?? 0,
+        lastQuestionDate: user.lastQuestionDate ?? 0,
+    };
+  },
+});
+
+// Internal mutation to increment count atomically
+export const incrementQuestionCount = internalMutation({
+    args: { userId: v.id("users") },
+    handler: async (ctx, args) => {
+        const user = await ctx.db.get(args.userId);
+        if (!user) return; // Should not happen if called after check
+
+        const now = Date.now();
+        const todayStart = new Date(now).setHours(0, 0, 0, 0);
+        const lastDateStart = user.lastQuestionDate ? new Date(user.lastQuestionDate).setHours(0, 0, 0, 0) : 0;
+
+        let currentCount = user.dailyQuestionCount ?? 0;
+        if (lastDateStart !== todayStart) {
+            currentCount = 0; // Reset count if it's a new day
+        }
+
+        await ctx.db.patch(args.userId, {
+            dailyQuestionCount: currentCount + 1,
+            lastQuestionDate: now, // Store timestamp of this question
+        });
+    },
 }); 

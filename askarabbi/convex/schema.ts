@@ -10,6 +10,8 @@ export default defineSchema({
     passwordHash: v.optional(v.string()),
     verificationToken: v.optional(v.string()),
     lastLoginAt: v.number(),
+    dailyQuestionCount: v.optional(v.number()),
+    lastQuestionDate: v.optional(v.number()),
   }),
   history: defineTable({
     userId: v.id("users"),

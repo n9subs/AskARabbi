@@ -16,6 +16,7 @@ import type {
 import type * as auth from "../auth.js";
 import type * as email from "../email.js";
 import type * as history from "../history.js";
+import type * as rateLimit from "../rateLimit.js";
 import type * as users from "../users.js";
 
 /**
@@ -30,6 +31,7 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   email: typeof email;
   history: typeof history;
+  rateLimit: typeof rateLimit;
   users: typeof users;
 }>;
 export declare const api: FilterApi<

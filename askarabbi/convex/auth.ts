@@ -54,6 +54,8 @@ export const signUp = mutation({
       isEmailVerified: false, 
       verificationToken,
       lastLoginAt: Date.now(), // Consider if this should be null until first verified login
+      dailyQuestionCount: 0,
+      lastQuestionDate: 0, // Initialize to 0, will be set on first question
     });
 
     await ctx.scheduler.runAfter(0, internal.email.sendVerification, {
@@ -126,6 +128,8 @@ export const signInAnonymously = mutation({
       isAnonymous: true,
       isEmailVerified: false, 
       lastLoginAt: Date.now(),
+      dailyQuestionCount: 0,
+      lastQuestionDate: 0, // Initialize to 0
     });
     return { userId: newUserId, isNew: true };
   },
