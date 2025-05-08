@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Rubik } from "next/font/google";
 import "./globals.css";
 import { PostHogProvider } from "./providers";
+import { AuthProvider } from "./providers/AuthProvider";
+import ConvexClientProvider from "./providers/ConvexClientProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,9 +36,13 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${hebrewFont.variable} antialiased font-hebrew`}
       >
-        <PostHogProvider>
-          {children}
-        </PostHogProvider>
+        <ConvexClientProvider>
+          <PostHogProvider>
+            <AuthProvider>
+              {children}
+            </AuthProvider>
+          </PostHogProvider>
+        </ConvexClientProvider>
       </body>
     </html>
   );

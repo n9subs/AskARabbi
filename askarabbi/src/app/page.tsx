@@ -1,11 +1,16 @@
-'use client';
+"use client";
 
 import { useState, useEffect, useRef, KeyboardEvent, FormEvent } from 'react';
 import { usePostHog } from 'posthog-js/react';
+import RouteGuard from "./components/RouteGuard";
+import { useAuth } from "./providers/AuthProvider";
+import { useRouter } from "next/navigation";
 // import Image from "next/image"; // Removed unused import
 
 export default function Home() {
   const posthog = usePostHog();
+  const { userId, signOut, userName, isAnonymousUser } = useAuth();
+  const router = useRouter();
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState<null | {
     questionAsked: string;
@@ -87,6 +92,7 @@ export default function Home() {
         },
         body: JSON.stringify({
           question: question.trim(),
+          userId,
         }),
       });
       
@@ -156,12 +162,52 @@ export default function Home() {
   };
 
   return (
-    <>
+    <RouteGuard>
       <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] dark:bg-[var(--background)] dark:text-[var(--foreground)] flex flex-col">
         {/* Header */}
-        <header className="p-4 bg-[var(--primary)] text-[var(--background)] dark:text-[var(--background)] text-center">
-          <h1 className="text-2xl sm:text-3xl font-bold">יַהֲדוּת יֵשׁ תְּשׁוּבוֹת לִשְׁאֵלוֹת</h1>
-          <p className="mt-2">שָׁאַלְתָּ&apos;רבָ</p>
+        <header className="p-4 bg-[var(--primary)] text-[var(--background)]">
+          <div className="container mx-auto flex justify-between items-center">
+            {/* Rightmost (RTL): בס"ד - takes minimal space */}
+            <div className="text-sm flex-shrink-0">
+              בס&quot;ד
+            </div>
+
+            {/* Middle: Title - grows to fill space */}
+            <div className="flex-grow text-center px-4"> {/* px-4 for spacing from sides */}
+              <h1 className="text-2xl sm:text-3xl font-bold">יַהֲדוּת יֵשׁ תְּשׁוּבוֹת לִשְׁאֵלוֹת</h1>
+              <p className="mt-1 text-xs sm:text-sm">שָׁאַלְתָּ&apos;רבָ</p> {/* Slightly smaller subtitle */} 
+            </div>
+
+            {/* Leftmost (RTL): User Actions - takes minimal space, items packed closely */}
+            <div className="flex-shrink-0">
+              {userId ? (
+                <div className="flex items-center space-x-2 space-x-reverse"> {/* space-x-2 for closer packing */} 
+                  {/* User Name - visually rightmost in this group for RTL */}
+                  <div className="text-xs sm:text-sm text-[var(--background)]">
+                    {isAnonymousUser ? "אורח" : userName || "טוען..."}
+                  </div>
+
+                  {/* History Button */}
+                  <button
+                    onClick={() => router.push("/history")}
+                    className="px-2.5 py-1 bg-slate-200 text-[var(--primary)] rounded-md hover:bg-slate-300/80 transition-colors font-medium text-xs shadow-sm"
+                  >
+                    היסטוריה
+                  </button>
+
+                  {/* Logout Button */} 
+                  <button
+                    onClick={() => { if (signOut) signOut(); router.push("/auth/sign-in"); }}
+                    className="px-2.5 py-1 bg-white text-[var(--primary)] rounded-md hover:bg-slate-100 transition-colors font-medium text-xs shadow-sm"
+                  >
+                    התנתק
+                  </button>
+                </div>
+              ) : (
+                <div className="h-[28px] w-[1px]">&nbsp;</div> /* Minimal placeholder for alignment consistency */
+              )}
+            </div>
+          </div>
         </header>
 
         {/* Main Content */}
@@ -283,6 +329,7 @@ export default function Home() {
               }}
             >אן9 רקורדס</a> באהבה ❤️
           </p>
+          טוֹב לְהוֹדוֹת לָה&apos;
         </footer>
       </div>
 
@@ -318,6 +365,6 @@ export default function Home() {
           </div>
         </div>
       )}
-    </>
+    </RouteGuard>
   );
 }
