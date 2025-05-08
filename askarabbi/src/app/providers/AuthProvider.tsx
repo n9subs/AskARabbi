@@ -4,11 +4,13 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
+import { usePostHog } from 'posthog-js/react';
 
 interface AuthContextType {
   userId: Id<"users"> | null;
   isLoading: boolean;
   userName: string | null;
+  userEmail: string | null;
   isAnonymousUser: boolean;
   signUp: (email: string, password: string, name?: string) => Promise<{ success: boolean; message?: string }>;
   login: (email: string, password: string) => Promise<void>;
@@ -22,7 +24,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [userName, setUserName] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [isAnonymousUser, setIsAnonymousUser] = useState(false);
+  const posthog = usePostHog();
 
   const signUpMutation = useMutation(api.auth.signUp);
   const loginMutation = useMutation(api.auth.login);
@@ -43,21 +47,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (userProfile) {
+    if (userId && userProfile) {
       setUserName(userProfile.name || null);
+      setUserEmail(userProfile.email || null);
       setIsAnonymousUser(userProfile.isAnonymous || false);
+      
+      if (posthog) {
+        posthog.identify(
+          userId,
+          {
+            email: userProfile.email || undefined,
+            name: userProfile.name || undefined,
+            isAnonymous: userProfile.isAnonymous || false
+          }
+        );
+      }
+      setIsLoading(false);
     } else if (!userId) {
+       setUserName(null);
+       setUserEmail(null);
+       setIsAnonymousUser(false);
+       if (posthog) {
+          posthog.reset();
+       }
        setIsLoading(false); 
     }
-    if ((userId && userProfile !== undefined) || !userId) {
-        setIsLoading(false);
-    }
-  }, [userId, userProfile]);
+  }, [userId, userProfile, posthog]);
 
   const handleAuthSessionUpdate = (newUserId: Id<"users"> | null) => {
     setUserId(newUserId);
     if (!newUserId) {
         setUserName(null);
+        setUserEmail(null);
         setIsAnonymousUser(false);
     }
   };
@@ -76,8 +97,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const result = await loginMutation({ email, password });
       if (result && result.userId) { 
-        localStorage.removeItem("anonymousUserId"); // Clear anon ID
-        localStorage.setItem("userId", result.userId); // Set regular ID
+        localStorage.removeItem("anonymousUserId");
+        localStorage.setItem("userId", result.userId);
         handleAuthSessionUpdate(result.userId);
       } else {
         throw new Error("Login mutation failed unexpectedly.");
@@ -96,10 +117,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }); 
       
       if (result && result.userId) {
-        localStorage.removeItem("userId"); // Clear regular ID
-        localStorage.setItem("anonymousUserId", result.userId); // ALWAYS store the returned ID as the current/last anon ID
+        localStorage.removeItem("userId");
+        localStorage.setItem("anonymousUserId", result.userId);
         handleAuthSessionUpdate(result.userId);
-        // isAnonymousUser state will be updated via useEffect watching userProfile
       } else {
         throw new Error("Anonymous sign in failed to return a user ID.");
       }
@@ -113,7 +133,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = () => {
     handleAuthSessionUpdate(null);
     localStorage.removeItem("userId"); 
-    // Keep anonymousUserId for persistence
   };
 
   return (
@@ -122,6 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         userId,
         isLoading,
         userName,
+        userEmail,
         isAnonymousUser,
         signUp,
         login,

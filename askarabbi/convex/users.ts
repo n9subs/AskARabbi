@@ -14,6 +14,7 @@ export const getUserProfile = query({
     }
     return {
       name: user.name,
+      email: user.email,
       isAnonymous: user.isAnonymous,
       // We don't want to return everything, just what's needed for the profile display
     };
