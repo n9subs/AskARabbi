@@ -1,21 +1,49 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../providers/AuthProvider';
 import RouteGuard from '../components/RouteGuard';
-import { useQuery } from 'convex/react';
+import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { Id } from '../../../convex/_generated/dataModel';
+import ConfirmationModal from '../components/ConfirmationModal';
 
 export default function HistoryPage() {
   const router = useRouter();
   const { userId, isLoading: authLoading } = useAuth();
+  const deleteItemMutation = useMutation(api.history.deleteItem);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<Id<"history"> | null>(null);
 
   const userHistory = useQuery(
     api.history.list,
     userId ? { userId: userId as Id<"users"> } : "skip"
   );
+
+  const handleDeleteClick = (historyItemId: Id<"history">) => {
+    setItemToDelete(historyItemId);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setItemToDelete(null);
+  };
+
+  const confirmDeletion = async () => {
+    if (!itemToDelete) return;
+
+    try {
+      await deleteItemMutation({ historyItemId: itemToDelete });
+      closeModal();
+    } catch (error) {
+      console.error("Failed to delete history item:", error);
+      alert("שגיאה במחיקת הפריט מההיסטוריה.");
+      closeModal();
+    }
+  };
 
   if (authLoading) {
     return (
@@ -64,9 +92,19 @@ export default function HistoryPage() {
               {userHistory.map((item) => (
                 <div 
                   key={item._id}
-                  className="bg-white p-5 rounded-lg shadow-md border border-gray-200 hover:shadow-lg transition-shadow duration-300 ease-in-out"
+                  className="bg-white p-5 rounded-lg shadow-md border border-gray-200 hover:shadow-lg transition-shadow duration-300 ease-in-out relative"
                 >
-                  <div className="mb-4 pb-2 border-b border-gray-200">
+                  <button
+                    onClick={() => handleDeleteClick(item._id)}
+                    className="absolute top-4 left-4 p-2 bg-red-100 text-red-600 hover:bg-red-200 hover:text-red-800 rounded-full transition-colors duration-150 ease-in-out shadow"
+                    title="מחק שאלה זו"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+
+                  <div className="mb-4 pb-2 border-b border-gray-200 pr-12">
                     <h3 className="text-xl font-semibold text-gray-700 mb-1">שאלה:</h3>
                     <p className="text-lg text-[var(--primary)]">
                       {item.question}
@@ -108,6 +146,16 @@ export default function HistoryPage() {
             </div>
           )}
         </main>
+
+        <ConfirmationModal
+          isOpen={isModalOpen}
+          onClose={closeModal}
+          onConfirm={confirmDeletion}
+          title="אישור מחיקה"
+          message="האם אתה בטוח שברצונך למחוק פריט זה מההיסטוריה? לא ניתן לשחזר פעולה זו."
+          confirmText="מחק"
+          cancelText="ביטול"
+        />
       </div>
     </RouteGuard>
   );
