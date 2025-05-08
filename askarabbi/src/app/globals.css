@@ -6,6 +6,12 @@
   --primary: #0d3677;
   --secondary: #7a5901;
   --accent: #2a6b31;
+  --error-bg: #FAE0E0; /* Light red for error background */
+  --error-text: #9B2C2C; /* Dark red for error text */
+
+  /* Input specific colors */
+  --input-background: #FFFFFF;
+  --input-placeholder-text: #6b7280; /* gray-500 for placeholder */
 }
 
 @theme inline {
@@ -14,6 +20,10 @@
   --color-primary: var(--primary);
   --color-secondary: var(--secondary);
   --color-accent: var(--accent);
+  --color-error-bg: var(--error-bg);
+  --color-error-text: var(--error-text);
+  --color-input-background: var(--input-background);
+  --color-input-placeholder-text: var(--input-placeholder-text);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-hebrew: var(--font-hebrew);
@@ -21,11 +31,20 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #f7f4e9;
-    --primary: #4b78c9;
-    --secondary: #d1af41;
-    --accent: #5eb762;
+    /* Dark theme - main background and foreground will now inherit from light mode */
+    /* --background: #2D2520; */ /* REMOVED to keep light background */
+    /* --foreground: #E0D8C8; */ /* REMOVED to keep dark foreground text */
+    --primary: #5E87CC;    /* Brighter Blue for dark mode */
+    --secondary: #B08D57;  /* Lighter Bronze/Gold */
+    --accent: #5A7D4F;     /* Olive Green - kept from light, or define dark variant if needed */
+    --tanakh-accent: #6A94C2; /* Lighter Dignified Blue */
+    --summary-accent: #a0a7ad; /* Lighter Neutral Gray */
+    --error-bg: #5c3b3b; /* Darker red for error background */
+    --error-text: #ffc0c0; /* Lighter red for error text */
+
+    /* Input specific colors for dark mode - will now inherit from light mode */
+    /* --input-background: #424242; */ /* REMOVED to keep light input background */
+    /* --input-placeholder-text: #9ca3af; */ /* REMOVED to keep light placeholder text */
   }
 }
 

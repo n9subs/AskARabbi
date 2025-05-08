@@ -94,11 +94,11 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f7f4e9] text-[#34210b] flex flex-col">
+    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] dark:bg-[var(--background)] dark:text-[var(--foreground)] flex flex-col">
       {/* Header */}
-      <header className="p-4 bg-[#0d3677] text-white text-center">
-        <h1 className="text-2xl sm:text-3xl font-bold">שאלות ותשובות יהודיות</h1>
-        <p className="mt-2">במה אפשר לעזור?</p>
+      <header className="p-4 bg-[var(--primary)] text-[var(--background)] dark:text-[var(--background)] text-center">
+        <h1 className="text-2xl sm:text-3xl font-bold">יַהֲדוּת יֵשׁ תְּשׁוּבוֹת לִשְׁאֵלוֹת</h1>
+        <p className="mt-2">שָׁאַלְתָּ'רבָ</p>
       </header>
 
       {/* Main Content */}
@@ -108,8 +108,8 @@ export default function Home() {
           <div className="relative mb-4">
             <textarea
               onKeyDown={handleKeyDown}
-              className="w-full p-4 pb-4 rounded-lg border-2 border-[#0d3677] bg-white text-right resize-none h-32 placeholder:text-gray-500"
-              placeholder="שאל שאלה על היהדות..."
+              className="w-full p-4 pb-4 rounded-lg border-2 border-[var(--primary)] bg-[var(--input-background)] text-[var(--foreground)] text-right resize-none h-32 placeholder:text-[var(--input-placeholder-text)] focus:ring-2 focus:ring-[var(--primary)] focus:ring-opacity-75 outline-none"
+              placeholder="שָׁאַל שְׁאֵלָה עַל יַהֲדוּת..."
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
             />
@@ -122,7 +122,7 @@ export default function Home() {
               disabled={isLoading || !question.trim()}
               className={`${
                 isLoading || !question.trim() ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[var(--secondary)]'
-              } bg-[var(--primary)] text-[var(--background)] px-6 py-3 rounded-full font-bold transition-colors`}
+              } bg-[var(--primary)] text-[var(--background)] px-6 py-3 rounded-full font-bold transition-colors focus:ring-2 focus:ring-[var(--primary)] focus:ring-offset-2 focus:ring-offset-[var(--background)] focus:ring-opacity-75 outline-none`}
             >
               {'שלח'}
             </button>
@@ -137,7 +137,15 @@ export default function Home() {
           </div>
         )}
 
-        {/* Loading State or Answer Display Area */}
+        {/* Initial Placeholder for Answer Area */}
+        {!isLoading && !answer && !error && (
+          <div className="text-center py-10 text-[var(--foreground)] text-opacity-60">
+            <p className="text-lg">התשובות לשאלותיך יופיעו כאן</p>
+            {/* Optional: Consider adding a thematic icon here later, e.g., a simple SVG scroll or quill */}
+          </div>
+        )}
+
+        {/* Loading State */}
         {isLoading && (
           <div className="text-center p-10 bg-transparent rounded-lg my-8 flex flex-col items-center justify-center">
             <div className="w-12 h-12 border-4 border-dashed border-[var(--primary)] border-t-transparent rounded-full animate-spin mb-6"></div>
@@ -148,7 +156,7 @@ export default function Home() {
         )}
         
         {!isLoading && answer && (
-          <div className="bg-[#FCF9F0] rounded-lg shadow-lg p-6 mb-8">
+          <div className="bg-[#FCF9F0] rounded-lg p-6 mb-8 border-2 border-[var(--secondary)]">
             <div className="mb-4 p-3 bg-[#F0EADF] rounded">
               <h3 className="text-lg font-bold mb-2">השאלה שלך:</h3>
               <p>{answer.questionAsked}</p>
@@ -189,13 +197,15 @@ export default function Home() {
         )}
         
         {/* Disclaimer */}
-        <div className="text-center text-sm text-gray-600 mt-8">
-          <p>יישום זה אינו תחליף להתייעצות אישית עם רב</p>
+        <div className="text-center text-sm text-[var(--foreground)] text-opacity-75 mt-8">
+          <p>שאלת'רב אינו תחליף להתייעצות אישית עם רב</p>
           <p>לשאלות מורכבות או רגישות, אנא פנה לרב בקהילתך</p>
         </div>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-
+      <footer className="py-6 text-center text-sm text-[var(--foreground)] text-opacity-75">
+        <p>
+          שאלת&apos;רב מופעל על ידי <a href="https://n9records.com/" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--primary)] transition-colors">אן9 רקורדס</a> באהבה ❤️
+        </p>
       </footer>
     </div>
   );
