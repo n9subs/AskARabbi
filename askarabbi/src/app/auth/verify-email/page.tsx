@@ -4,11 +4,13 @@ import React, { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
+import { usePostHog } from 'posthog-js/react';
 
 export default function VerifyEmailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const verifyEmailMutation = useMutation(api.auth.verifyEmail);
+  const posthog = usePostHog();
 
   const [status, setStatus] = useState<"verifying" | "success" | "error">("verifying");
   const [message, setMessage] = useState("מאמת את כתובת האימייל שלך...");
@@ -24,16 +26,27 @@ export default function VerifyEmailPage() {
 
     const verifyToken = async () => {
       try {
-        await verifyEmailMutation({ token });
+        const result = await verifyEmailMutation({ token });
         setStatus("success");
         setMessage("האימייל שלך אומת בהצלחה! הנך מועבר לדף הראשי...");
+
+        if (posthog) {
+            if (result && !result.alreadyVerified) {
+                posthog.capture('email_verified', { 
+                    verification_status: 'success' 
+                });
+            }
+        }
+
         setTimeout(() => {
           router.push("/");
         }, 3000);
       } catch (err) {
         setStatus("error");
         const errorMessage = err instanceof Error ? err.message : "אירעה שגיאה לא צפויה.";
-        if (errorMessage.toLowerCase().includes("invalid verification token")) {
+        if (errorMessage.toLowerCase().includes("קישור אימות לא תקין או שפג תוקפו")) {
+          setMessage(errorMessage);
+        } else if (errorMessage.toLowerCase().includes("invalid verification token")) {
           setMessage("קישור האימות אינו תקין או שפג תוקפו. אנא נסה להירשם שוב או לבקש קישור חדש במידת האפשר.");
         } else {
           setMessage(`אירעה שגיאה באימות האימייל: ${errorMessage}`);
@@ -43,7 +56,7 @@ export default function VerifyEmailPage() {
     };
 
     verifyToken();
-  }, [searchParams, verifyEmailMutation, router]);
+  }, [searchParams, verifyEmailMutation, router, posthog]);
 
   return (
     <div dir="rtl" className="min-h-screen flex flex-col items-center justify-center bg-[var(--background)] py-12 px-4 sm:px-6 lg:px-8">

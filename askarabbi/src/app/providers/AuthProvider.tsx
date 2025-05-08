@@ -86,6 +86,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUp = async (email: string, password: string, name?: string) => {
     try {
       await signUpMutation({ email, password, name });
+      if (posthog) {
+        posthog.capture('user_signed_up', { 
+            email: email,
+            name_provided: !!name 
+        });
+      }
       return { success: true }; 
     } catch (error) { 
       console.error("Sign up error:", error);
@@ -97,7 +103,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const result = await loginMutation({ email, password });
       if (result && result.userId) { 
-        localStorage.removeItem("anonymousUserId");
+        if (posthog) {
+            posthog.capture('user_logged_in', { method: 'email' });
+        }
+        localStorage.removeItem("anonymousUserId"); 
         localStorage.setItem("userId", result.userId);
         handleAuthSessionUpdate(result.userId);
       } else {
@@ -117,7 +126,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }); 
       
       if (result && result.userId) {
-        localStorage.removeItem("userId");
+        if (posthog) {
+            posthog.capture('user_logged_in', { 
+                method: 'anonymous', 
+                isNew: result.isNew
+            });
+        }
+        localStorage.removeItem("userId"); 
         localStorage.setItem("anonymousUserId", result.userId);
         handleAuthSessionUpdate(result.userId);
       } else {
@@ -131,8 +146,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = () => {
-    handleAuthSessionUpdate(null);
+    const userIdBeforeSignOut = userId;
+    handleAuthSessionUpdate(null); 
     localStorage.removeItem("userId"); 
+    if (posthog) {
+        posthog.capture('user_logged_out', { userId_before_logout: userIdBeforeSignOut });
+    }
   };
 
   return (

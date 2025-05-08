@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../providers/AuthProvider';
 import RouteGuard from '../components/RouteGuard';
@@ -8,11 +8,13 @@ import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { Id } from '../../../convex/_generated/dataModel';
 import ConfirmationModal from '../components/ConfirmationModal';
+import { usePostHog } from 'posthog-js/react';
 
 export default function HistoryPage() {
   const router = useRouter();
   const { userId, isLoading: authLoading } = useAuth();
   const deleteItemMutation = useMutation(api.history.deleteItem);
+  const posthog = usePostHog();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<Id<"history"> | null>(null);
@@ -22,12 +24,28 @@ export default function HistoryPage() {
     userId ? { userId: userId as Id<"users"> } : "skip"
   );
 
+  useEffect(() => {
+    if (posthog && userId) {
+      posthog.capture('history_page_viewed');
+    }
+    // Intentionally run only once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps 
+  }, [posthog, userId]);
+
   const handleDeleteClick = (historyItemId: Id<"history">) => {
     setItemToDelete(historyItemId);
     setIsModalOpen(true);
+    if (posthog) {
+      posthog.capture('history_delete_prompt_shown', { historyItemId });
+    }
   };
 
   const closeModal = () => {
+    if (itemToDelete && isModalOpen) {
+      if (posthog) {
+        posthog.capture('history_delete_prompt_canceled', { historyItemId: itemToDelete });
+      }
+    }
     setIsModalOpen(false);
     setItemToDelete(null);
   };
@@ -35,13 +53,18 @@ export default function HistoryPage() {
   const confirmDeletion = async () => {
     if (!itemToDelete) return;
 
+    if (posthog) {
+      posthog.capture('history_delete_confirmed', { historyItemId: itemToDelete });
+    }
+
     try {
       await deleteItemMutation({ historyItemId: itemToDelete });
       closeModal();
     } catch (error) {
       console.error("Failed to delete history item:", error);
       alert("שגיאה במחיקת הפריט מההיסטוריה.");
-      closeModal();
+      setIsModalOpen(false);
+      setItemToDelete(null);
     }
   };
 
