@@ -10,14 +10,21 @@ function simpleHash(str: string): string {
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
     hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
+    hash = hash & hash; // Convert to 32bit integer
   }
   return hash.toString(36);
 }
 
 // Generate a verification token
 function generateToken(): string {
-  return Math.random().toString(36).substring(2) + Date.now().toString(36);
+  // Using a more robust method for token generation if available, or ensure this is secure enough for the context
+  // For this example, a simple random string should suffice for a basic verification token
+  const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let token = "";
+  for (let i = 0; i < 32; i++) { // 32 characters long token
+    token += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return token;
 }
 
 export const signUp = mutation({
@@ -26,38 +33,34 @@ export const signUp = mutation({
     password: v.string(),
     name: v.optional(v.string()),
   },
-  async handler(ctx, args) {
-    // Check if user already exists
+  handler: async (ctx, args) => {
     const existingUser = await ctx.db
       .query("users")
       .filter((q) => q.eq(q.field("email"), args.email))
       .first();
 
     if (existingUser) {
-      throw new ConvexError("User already exists");
+      throw new ConvexError("משתמש עם אימייל זה כבר קיים.");
     }
 
     const passwordHash = simpleHash(args.password);
     const verificationToken = generateToken();
 
-    // Create user
-    const userId = await ctx.db.insert("users", {
+    await ctx.db.insert("users", {
       email: args.email,
       name: args.name,
       passwordHash,
       isAnonymous: false,
-      isEmailVerified: false,
+      isEmailVerified: false, 
       verificationToken,
-      lastLoginAt: Date.now(),
+      lastLoginAt: Date.now(), // Consider if this should be null until first verified login
     });
 
-    // Send verification email using internal action
     await ctx.scheduler.runAfter(0, internal.email.sendVerification, {
       email: args.email,
       token: verificationToken,
     });
-
-    return { userId };
+    // No userId returned, sign-up does not auto-login.
   },
 });
 
@@ -66,37 +69,65 @@ export const login = mutation({
     email: v.string(),
     password: v.string(),
   },
-  async handler(ctx, args) {
+  handler: async (ctx, args) => {
     const user = await ctx.db
       .query("users")
       .filter((q) => q.eq(q.field("email"), args.email))
       .first();
 
-    if (!user) {
-      throw new ConvexError("Invalid credentials");
+    if (!user || user.isAnonymous) {
+      throw new ConvexError("פרטי התחברות שגויים או שהמשתמש אינו קיים.");
     }
 
     const passwordHash = simpleHash(args.password);
     if (passwordHash !== user.passwordHash) {
-      throw new ConvexError("Invalid credentials");
+      throw new ConvexError("פרטי התחברות שגויים.");
     }
 
-    await ctx.db.patch(user._id, { lastLoginAt: Date.now() });
+    if (!user.isEmailVerified) {
+      // Before throwing, check if a token still exists to re-send? For now, simple error.
+      await ctx.scheduler.runAfter(0, internal.email.sendVerification, {
+        email: user.email!,
+        token: user.verificationToken!,
+      });
+      throw new ConvexError("יש לאמת את כתובת האימייל לפני ההתחברות. נשלח אליך מייל אימות חדש.");
+    }
+
+    // Clear verification token on successful login if it hasn't been cleared yet
+    // Though verifyEmail should have cleared it.
+    if (user.verificationToken) {
+        await ctx.db.patch(user._id, { verificationToken: undefined, lastLoginAt: Date.now() });
+    } else {
+        await ctx.db.patch(user._id, { lastLoginAt: Date.now() });
+    }
 
     return { userId: user._id };
   },
 });
 
 export const signInAnonymously = mutation({
-  args: {},
-  async handler(ctx) {
-    const userId = await ctx.db.insert("users", {
+  args: {
+    existingAnonymousId: v.optional(v.id("users")),
+  },
+  handler: async (ctx, args) => {
+    if (args.existingAnonymousId) {
+      const existingUser = await ctx.db.get(args.existingAnonymousId);
+      if (existingUser && existingUser.isAnonymous) {
+        // Found existing anonymous user, update last login and return it
+        await ctx.db.patch(existingUser._id, { lastLoginAt: Date.now() });
+        return { userId: existingUser._id, isNew: false };
+      }
+      // If ID provided but user not found or not anonymous, 
+      // it might be an old/invalid ID. Proceed to create a new one.
+    }
+
+    // Create a new anonymous user
+    const newUserId = await ctx.db.insert("users", {
       isAnonymous: true,
-      isEmailVerified: false,
+      isEmailVerified: false, 
       lastLoginAt: Date.now(),
     });
-
-    return { userId };
+    return { userId: newUserId, isNew: true };
   },
 });
 
@@ -104,21 +135,29 @@ export const verifyEmail = mutation({
   args: {
     token: v.string(),
   },
-  async handler(ctx, args) {
+  handler: async (ctx, args) => {
     const user = await ctx.db
       .query("users")
       .filter((q) => q.eq(q.field("verificationToken"), args.token))
       .first();
 
     if (!user) {
-      throw new ConvexError("Invalid verification token");
+      throw new ConvexError("קישור אימות לא תקין או שפג תוקפו.");
+    }
+
+    if (user.isEmailVerified) {
+        // Optional: If already verified, perhaps just inform the user or log them in.
+        // For now, just update last login time as a sign of activity.
+        await ctx.db.patch(user._id, { lastLoginAt: Date.now(), verificationToken: undefined });
+        return { userId: user._id, alreadyVerified: true };
     }
 
     await ctx.db.patch(user._id, {
       isEmailVerified: true,
-      verificationToken: undefined,
+      verificationToken: undefined, 
+      lastLoginAt: Date.now(), // Update last login/activity time
     });
 
-    return { userId: user._id };
+    return { userId: user._id, alreadyVerified: false };
   },
 }); 

@@ -2,41 +2,87 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "../../providers/AuthProvider";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function SignInPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const { login, signInAnonymously, userId, isLoading } = useAuth();
+  const [successMessage, setSuccessMessage] = useState("");
+  const [loadingAction, setLoadingAction] = useState<"login" | "anonymous" | null>(null);
+  const { login, signInAnonymously, userId, isLoading: authProviderLoading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
-    if (!isLoading && userId) {
+    if (!authProviderLoading && userId) {
       router.replace("/");
     }
-  }, [userId, isLoading, router]);
+  }, [userId, authProviderLoading, router]);
+
+  useEffect(() => {
+    if (searchParams.get("registered") === "true") {
+      setSuccessMessage("הרשמה הושלמה בהצלחה. יש לאמת את כתובת האימייל שלך לפני ההתחברות. בדוק את תיבת הדואר הנכנס.");
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+    setSuccessMessage("");
+    setLoadingAction("login");
     try {
       await login(email, password);
       router.push("/");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "אירעה שגיאה");
+      let displayError = "אירעה שגיאה בהתחברות. נסה שנית או פנה לתמיכה."; // Default
+      if (err instanceof Error) {
+        console.error("Raw login error:", err.message); 
+        const rawMsg = err.message;
+
+        // Attempt to extract the message after "ConvexError: " and before " at handler"
+        const coreErrorMatch = rawMsg.match(/ConvexError:\s*(.*?)\s*at handler/);
+        const coreErrorMessage = coreErrorMatch ? coreErrorMatch[1] : null;
+
+        if (coreErrorMessage) {
+          // Use the extracted message directly if found
+          displayError = coreErrorMessage;
+          // Optional: Further refine common messages if needed
+          if (coreErrorMessage.includes("פרטי התחברות שגויים") || coreErrorMessage.includes("המשתמש אינו קיים")) {
+             displayError = "כתובת האימייל או הסיסמה שהוזנו שגויים."; // Overwrite with simpler message
+          }
+          // Keep the "יש לאמת..." message as is, since it contains useful info.
+        } else {
+          // Fallback if regex fails: check raw message for keywords
+          if (rawMsg.includes("פרטי התחברות שגויים") || rawMsg.includes("המשתמש אינו קיים")) {
+            displayError = "כתובת האימייל או הסיסמה שהוזנו שגויים.";
+          } else if (rawMsg.includes("יש לאמת את כתובת האימייל")) {
+            // Extract the known good string as a fallback
+            displayError = "יש לאמת את כתובת האימייל לפני ההתחברות. נשלח אליך מייל אימות חדש."; 
+          } // Otherwise, the initial default generic error remains.
+        }
+      }
+      setError(displayError); // Set the cleaned, specific, or generic error
+    } finally {
+      setLoadingAction(null);
     }
   };
 
   const handleAnonymousSignIn = async () => {
+    setError("");
+    setSuccessMessage("");
+    setLoadingAction("anonymous");
     try {
       await signInAnonymously();
       router.push("/");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "אירעה שגיאה");
+      setError(err instanceof Error ? err.message : "אירעה שגיאה בהתחברות כאורח.");
+    } finally {
+      setLoadingAction(null);
     }
   };
 
-  if (isLoading || userId) {
+  if (authProviderLoading || userId) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[var(--primary)]"></div>
@@ -45,79 +91,93 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[var(--background)] py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div dir="rtl" className="min-h-screen flex items-center justify-center bg-[var(--background)] py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8 bg-white p-8 sm:p-10 rounded-xl shadow-xl border border-gray-200">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-[var(--foreground)]">
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-[var(--primary)]">
             התחברות לשאלת&apos;רב
           </h2>
         </div>
+
+        {successMessage && (
+          <div className="text-green-600 text-sm text-center p-3 bg-green-50 border border-green-300 rounded-md">
+            {successMessage}
+          </div>
+        )}
+        {error && (
+          <div className="text-red-500 text-sm text-center p-3 bg-red-50 border border-red-300 rounded-md">
+            {error}
+          </div>
+        )}
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
+          <div className="rounded-md shadow-sm space-y-3">
             <div>
-              <label htmlFor="email-address" className="sr-only">
-                כתובת אימייל
-              </label>
+              <label htmlFor="email-address" className="sr-only">כתובת אימייל</label>
               <input
                 id="email-address"
                 name="email"
                 type="email"
                 autoComplete="email"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-[var(--primary)] placeholder-[var(--input-placeholder-text)] text-[var(--foreground)] rounded-t-md focus:outline-none focus:ring-[var(--primary)] focus:border-[var(--primary)] focus:z-10 sm:text-sm bg-[var(--input-background)]"
-                placeholder="כתובת אימייל"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                dir="rtl"
+                disabled={loadingAction !== null}
+                className="appearance-none relative block w-full px-3 py-2.5 border border-gray-300 placeholder-gray-500 text-[var(--foreground)] rounded-md focus:outline-none focus:ring-[var(--primary)] focus:border-[var(--primary)] sm:text-sm bg-[var(--input-background)] disabled:opacity-70"
+                placeholder="כתובת אימייל"
               />
             </div>
             <div>
-              <label htmlFor="password" className="sr-only">
-                סיסמה
-              </label>
+              <label htmlFor="password" className="sr-only">סיסמה</label>
               <input
                 id="password"
                 name="password"
                 type="password"
                 autoComplete="current-password"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-[var(--primary)] placeholder-[var(--input-placeholder-text)] text-[var(--foreground)] rounded-b-md focus:outline-none focus:ring-[var(--primary)] focus:border-[var(--primary)] focus:z-10 sm:text-sm bg-[var(--input-background)]"
-                placeholder="סיסמה"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                dir="rtl"
+                disabled={loadingAction !== null}
+                className="appearance-none relative block w-full px-3 py-2.5 border border-gray-300 placeholder-gray-500 text-[var(--foreground)] rounded-md focus:outline-none focus:ring-[var(--primary)] focus:border-[var(--primary)] sm:text-sm bg-[var(--input-background)] disabled:opacity-70"
+                placeholder="סיסמה"
               />
             </div>
           </div>
 
-          {error && (
-            <div className="text-red-500 text-sm text-center" dir="rtl">{error}</div>
-          )}
-
-          <div className="flex flex-col space-y-4">
+          <div className="flex flex-col space-y-3">
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-[var(--background)] bg-[var(--primary)] hover:bg-[var(--secondary)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary)]"
+              disabled={loadingAction !== null}
+              className="group relative w-full flex justify-center py-2.5 px-4 border border-transparent text-sm font-medium rounded-full text-[var(--background)] bg-[var(--primary)] hover:bg-[var(--secondary)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary)] disabled:opacity-70 transition-colors"
             >
-              התחבר
+              {loadingAction === "login" ? (
+                <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-[var(--background)]"></div>
+              ) : (
+                "התחבר"
+              )}
             </button>
             <button
               type="button"
               onClick={handleAnonymousSignIn}
-              className="group relative w-full flex justify-center py-2 px-4 border border-[var(--primary)] text-sm font-medium rounded-md text-[var(--foreground)] bg-[var(--background)] hover:bg-[var(--input-background)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary)]"
+              disabled={loadingAction !== null}
+              className="group relative w-full flex justify-center py-2.5 px-4 border border-[var(--primary)] text-sm font-medium rounded-full text-[var(--primary)] bg-transparent hover:bg-[var(--primary)]/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary)] disabled:opacity-70 transition-colors"
             >
-              המשך כאורח
+              {loadingAction === "anonymous" ? (
+                 <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-[var(--primary)]"></div>
+              ) : (
+                "המשך כאורח"
+              )}
             </button>
           </div>
         </form>
 
-        <div className="text-center">
-          <a
-            href="/auth/sign-up"
-            className="font-medium text-[var(--primary)] hover:text-[var(--secondary)]"
-          >
-            אין לך חשבון? הירשם עכשיו
-          </a>
+        <div className="text-center text-sm">
+          <p>
+            אין לך חשבון?{' '}
+            <a href="/auth/sign-up" className="font-medium text-[var(--primary)] hover:text-[var(--secondary)]">
+              הירשם עכשיו
+            </a>
+          </p>
         </div>
       </div>
     </div>
