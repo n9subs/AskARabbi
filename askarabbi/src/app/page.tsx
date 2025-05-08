@@ -267,7 +267,21 @@ export default function Home() {
         </main>
         <footer className="py-6 text-center text-sm text-[var(--foreground)] text-opacity-75">
           <p>
-            שאלת&apos;רב מופעל על ידי <a href="https://n9records.com/" target="_blank" rel="noopener noreferrer" className="underline hover:text-[var(--primary)] transition-colors">אן9 רקורדס</a> באהבה ❤️
+            שאלת&apos;רב מופעל על ידי <a 
+              href="https://n9records.com/" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="underline hover:text-[var(--primary)] transition-colors"
+              onClick={() => {
+                if (posthog) {
+                  posthog.capture('footer_link_clicked', {
+                    link_url: 'https://n9records.com/',
+                    link_text: 'אן9 רקורדס',
+                    clicked_at: new Date().toISOString(),
+                  });
+                }
+              }}
+            >אן9 רקורדס</a> באהבה ❤️
           </p>
         </footer>
       </div>
