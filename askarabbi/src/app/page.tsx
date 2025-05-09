@@ -6,7 +6,14 @@ import RouteGuard from "./components/RouteGuard";
 import { useAuth } from "./providers/AuthProvider";
 import { useRouter } from "next/navigation";
 import Linkify from '@/utils/linkify';
+import dynamic from 'next/dynamic';
 // import Image from "next/image"; // Removed unused import
+
+// Dynamically import the new ScrollWriterLoader
+const ScrollWriterLoader = dynamic(() => import('./components/ScrollWriterLoader'), { 
+  ssr: false, 
+  loading: () => <div style={{height: '220px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>טוען אנימציה...</div>
+});
 
 export default function Home() {
   const posthog = usePostHog();
@@ -16,7 +23,8 @@ export default function Home() {
     userName, 
     isAnonymousUser, 
     dailyQuestionCount, // Get rate limit state
-    dailyLimit 
+    dailyLimit,
+    pendingQuestion
   } = useAuth();
   const router = useRouter();
   const [question, setQuestion] = useState('');
@@ -30,6 +38,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const [checkingForAnswer, setCheckingForAnswer] = useState(false);
 
   // State for disclaimer popup
   const [showDisclaimerPopup, setShowDisclaimerPopup] = useState(false);
@@ -44,6 +53,95 @@ export default function Home() {
     "מכין לך תשובה מפורטת....."
   ];
   const [currentLoadingTextIndex, setCurrentLoadingTextIndex] = useState(0);
+
+  // Set loading state when there's a pending question but no answer yet
+  useEffect(() => {
+    if (pendingQuestion && !answer) {
+      setIsLoading(true);
+    } else if (!pendingQuestion || answer) {
+      setIsLoading(false);
+    }
+  }, [pendingQuestion, answer]);
+
+  // Check for answers to pending questions
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout | undefined = undefined;
+    
+    const checkForAnswer = async () => {
+      // Only check if we have a pending question and not already checking
+      if (pendingQuestion && !checkingForAnswer && userId) {
+        try {
+          setCheckingForAnswer(true);
+          const response = await fetch(`/api/getAnswer?questionId=${pendingQuestion.questionId}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+          
+          const data = await response.json();
+          
+          if (response.ok && data.answer) {
+            // Only set the answer if the tanakh is not the placeholder text
+            if (data.answer.tanakh !== "מחפש תשובה...") {
+              // We got an answer!
+              setAnswer({
+                questionAsked: pendingQuestion.questionText,
+                ...data.answer
+              });
+              
+              // Clear the pending question in the database
+              try {
+                await fetch('/api/clearPendingQuestion', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    userId,
+                  }),
+                });
+              } catch (error) {
+                console.error('Error clearing pending question:', error);
+              }
+              
+              // Track answer received
+              if (posthog) {
+                posthog.capture('answer_received', {
+                  question_asked: pendingQuestion.questionText,
+                  has_tanakh_answer: !!data.answer?.tanakh,
+                  has_talmud_answer: !!data.answer?.talmud,
+                  has_web_answer: !!data.answer?.web,
+                  has_summary: !!data.answer?.summary,
+                  received_at: new Date().toISOString(),
+                });
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching pending answer:', error);
+        } finally {
+          setCheckingForAnswer(false);
+        }
+      }
+    };
+    
+    // Initial check when component mounts or pendingQuestion changes
+    if (pendingQuestion && !answer) {
+      checkForAnswer();
+    }
+    
+    // Set up interval to check every 3 seconds
+    if (pendingQuestion && !answer) {
+      intervalId = setInterval(checkForAnswer, 3000);
+    }
+    
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [pendingQuestion, checkingForAnswer, posthog, userId, answer]);
 
   useEffect(() => {
     let intervalId: NodeJS.Timeout | undefined = undefined;
@@ -78,10 +176,17 @@ export default function Home() {
 
   const remainingQuestions = dailyLimit - dailyQuestionCount;
 
+  // Handle form submission
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     
     if (!question.trim()) return;
+    
+    // Prevent submission if there's a pending question (regardless of answer state)
+    if (pendingQuestion) {
+      setError("יש לך שאלה ממתינה. אנא המתן לתשובה לפני שליחת שאלה חדשה.");
+      return;
+    }
     
     // Track question submitted
     if (posthog) {
@@ -93,6 +198,7 @@ export default function Home() {
     
     setIsLoading(true);
     setError(null);
+    setAnswer(null); // Clear previous answer when submitting a new question
     
     try {
       const response = await fetch('/api/question', {
@@ -109,27 +215,35 @@ export default function Home() {
       const data = await response.json();
       
       if (!response.ok) {
-        // Track submission error if needed, e.g., posthog.capture('question_submission_failed', { error: data.error });
+        // Track submission error
         throw new Error(data.error || 'שגיאה בעיבוד השאלה');
       }
       
-      setAnswer({ questionAsked: question.trim(), ...data.answer });
+      if (data.status === "pending") {
+        // Question was accepted for processing but the answer isn't ready yet
+        setQuestion(''); // Clear the question input
+        // Loading state will continue because pendingQuestion is set
+      } else if (data.answer) {
+        // Legacy path (no longer used)
+        setQuestion('');
+        setAnswer({ questionAsked: question.trim(), ...data.answer });
+        setIsLoading(false);
 
-      // Track answer received
-      if (posthog) {
-        posthog.capture('answer_received', {
-          question_asked: question.trim(),
-          has_tanakh_answer: !!data.answer?.tanakh,
-          has_talmud_answer: !!data.answer?.talmud,
-          has_web_answer: !!data.answer?.web,
-          has_summary: !!data.answer?.summary,
-          received_at: new Date().toISOString(),
-        });
+        // Track answer received
+        if (posthog) {
+          posthog.capture('answer_received', {
+            question_asked: question.trim(),
+            has_tanakh_answer: !!data.answer?.tanakh,
+            has_talmud_answer: !!data.answer?.talmud,
+            has_web_answer: !!data.answer?.web,
+            has_summary: !!data.answer?.summary,
+            received_at: new Date().toISOString(),
+          });
+        }
       }
     } catch (error) {
-      console.error('Error fetching answer:', error);
+      console.error('Error submitting question:', error);
       setError(error instanceof Error ? error.message : 'שגיאה לא ידועה');
-    } finally {
       setIsLoading(false);
     }
   };
@@ -222,66 +336,83 @@ export default function Home() {
 
         {/* Main Content */}
         <main className="flex-1 container mx-auto p-4 max-w-3xl">
+          {/* Pending Question Notice */}
+          {pendingQuestion && !answer && !isLoading && (
+            <div className="mb-6 p-4 bg-amber-100 border border-amber-300 rounded-lg text-amber-800 text-right">
+              <p className="font-semibold">יש לך שאלה ממתינה לתשובה:</p>
+              <p className="mt-1">{pendingQuestion.questionText}</p>
+              <p className="mt-2 text-sm">
+                השאלה נשלחה {new Date(pendingQuestion.timestamp).toLocaleString('he-IL')}
+              </p>
+              <p className="mt-1 text-sm">המערכת תציג את התשובה כשהיא תהיה מוכנה. אין צורך לשלוח את השאלה שוב.</p>
+            </div>
+          )}
+
           {/* Question Form */}
-          <form ref={formRef} onSubmit={handleSubmit} className="mb-8 mt-4">
-            <div className="relative mb-4">
-              <textarea
-                onKeyDown={handleKeyDown}
-                className="w-full p-4 pb-4 rounded-lg border-2 border-[var(--primary)] bg-[var(--input-background)] text-[var(--foreground)] text-right resize-none h-32 placeholder:text-[var(--input-placeholder-text)] focus:ring-2 focus:ring-[var(--primary)] focus:ring-opacity-75 outline-none"
-                placeholder="שָׁאַל שְׁאֵלָה עַל יַהֲדוּת..."
-                value={question}
-                onChange={(e) => setQuestion(e.target.value)}
-              />
-              {/* Rate Limit Indicator */}
-              <div className="text-xs text-gray-500 text-left absolute bottom-2 right-3">
-                {remainingQuestions >= 0 ? 
-                  `שאלות נותרו להיום ${remainingQuestions} / ${dailyLimit} ` 
-                  : 
-                  `0 / ${dailyLimit} שאלות נותרו להיום`
-                }
+          {!isLoading && (
+            <form ref={formRef} onSubmit={handleSubmit} className="mb-8 mt-4">
+              <div className="relative mb-4">
+                <textarea
+                  onKeyDown={handleKeyDown}
+                  className={`w-full p-4 pb-4 rounded-lg border-2 
+                    ${pendingQuestion ? 'border-amber-300 bg-amber-50' : 'border-[var(--primary)] bg-[var(--input-background)]'} 
+                    text-[var(--foreground)] text-right resize-none h-32 
+                    placeholder:text-[var(--input-placeholder-text)] focus:ring-2 focus:ring-[var(--primary)] 
+                    focus:ring-opacity-75 outline-none
+                    ${pendingQuestion ? 'opacity-70' : ''}`}
+                  placeholder={pendingQuestion ? "יש לך שאלה ממתינה. אנא המתן לתשובה." : "שָׁאַל שְׁאֵלָה עַל יַהֲדוּת..."}
+                  value={question}
+                  onChange={(e) => setQuestion(e.target.value)}
+                  disabled={!!pendingQuestion}
+                />
+                {/* Rate Limit Indicator */}
+                <div className="text-xs text-gray-500 text-left absolute bottom-2 right-3">
+                  {remainingQuestions >= 0 ? 
+                    `שאלות נותרו להיום ${remainingQuestions} / ${dailyLimit} ` 
+                    : 
+                    `0 / ${dailyLimit} שאלות נותרו להיום`
+                  }
+                </div>
               </div>
-            </div>
-            
-            {/* Submit Button */}
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                disabled={isLoading || !question.trim()}
-                className={`${
-                  isLoading || !question.trim() ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[var(--secondary)]'
-                } bg-[var(--primary)] text-[var(--background)] px-6 py-3 rounded-full font-bold transition-colors focus:ring-2 focus:ring-[var(--primary)] focus:ring-offset-2 focus:ring-offset-[var(--background)] focus:ring-opacity-75 outline-none`}
-              >
-                {'שלח'}
-              </button>
-            </div>
-          </form>
+              
+              {/* Submit Button */}
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  disabled={isLoading || !question.trim() || !!pendingQuestion}
+                  className={`${
+                    isLoading || !question.trim() || !!pendingQuestion
+                      ? "bg-gray-300 cursor-not-allowed"
+                      : "bg-[var(--primary)] hover:bg-opacity-90"
+                  } px-6 py-2 rounded-md text-white text-lg transition-colors duration-150 ease-in-out font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]`}
+                >
+                  {"שלח שאלה"}
+                </button>
+              </div>
+            </form>
+          )}
 
           {/* Error Display */}
-          {error && (
+          {error && !isLoading && (
             <div className="bg-[var(--error-bg)] text-[var(--error-text)] p-4 rounded-lg mb-6 border border-[var(--error-text)] text-right">
               <h3 className="font-bold mb-2">שגיאה:</h3>
               <p>{error}</p>
             </div>
           )}
 
-          {/* Initial Placeholder for Answer Area */}
-          {!isLoading && !answer && !error && (
-            <div className="text-center py-10 text-[var(--foreground)] text-opacity-60">
-              <p className="text-lg">התשובות לשאלותיך יופיעו כאן</p>
-              {/* Optional: Consider adding a thematic icon here later, e.g., a simple SVG scroll or quill */}
-            </div>
-          )}
-
-          {/* Loading State */}
+          {/* Loading State with ScrollWriterLoader */}
           {isLoading && (
-            <div className="text-center p-10 bg-transparent rounded-lg my-8 flex flex-col items-center justify-center">
-              <div className="w-12 h-12 border-4 border-dashed border-[var(--primary)] border-t-transparent rounded-full animate-spin mb-6"></div>
-              <h3 className="text-xl font-bold text-[var(--primary)]">
-                {loadingTexts[currentLoadingTextIndex]}
-              </h3>
+            <div className="text-center p-6 bg-transparent rounded-lg my-8 flex flex-col items-center justify-center">
+              <ScrollWriterLoader loadingText={loadingTexts[currentLoadingTextIndex]} />
+              {pendingQuestion && !answer && (
+                <p className="mt-2 text-sm text-gray-500">
+                  מעבד את שאלתך: &quot;{pendingQuestion.questionText}&quot;
+                </p>
+              )}
             </div>
           )}
           
+          {/* Answer Display */}
           {!isLoading && answer && (
             <div className="bg-[#FCF9F0] rounded-lg p-6 mb-8 border-2 border-[var(--secondary)]">
               <div className="mb-4 p-3 bg-[#F0EADF] rounded">
@@ -323,7 +454,14 @@ export default function Home() {
             </div>
           )}
           
-          {/* Disclaimer */}
+          {/* Initial Placeholder for Answer Area (only if not loading, no answer, no error, no pending question shown as notice) */}
+          {!isLoading && !answer && !error && !(pendingQuestion && !answer) && (
+            <div className="text-center py-10 text-[var(--foreground)] text-opacity-60">
+              <p className="text-lg">התשובות לשאלותיך יופיעו כאן</p>
+            </div>
+          )}
+          
+          {/* Disclaimer Text */}
           <div className="text-center text-sm text-[var(--foreground)] text-opacity-75 mt-8">
             <p>שאלת&apos;רב אינו תחליף להתייעצות אישית עם רב</p>
             <p>לשאלות מורכבות או רגישות, אנא פנה לרב בקהילתך</p>

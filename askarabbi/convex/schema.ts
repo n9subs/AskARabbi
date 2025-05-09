@@ -12,6 +12,11 @@ export default defineSchema({
     lastLoginAt: v.number(),
     dailyQuestionCount: v.optional(v.number()),
     lastQuestionDate: v.optional(v.number()),
+    pendingQuestion: v.optional(v.object({
+      questionId: v.id("history"),
+      questionText: v.string(),
+      timestamp: v.number(),
+    })),
   }),
   history: defineTable({
     userId: v.id("users"),

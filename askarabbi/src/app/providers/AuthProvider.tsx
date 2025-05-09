@@ -18,6 +18,11 @@ interface AuthContextType {
   isAnonymousUser: boolean;
   dailyQuestionCount: number;
   dailyLimit: number;
+  pendingQuestion: {
+    questionId: Id<"history">;
+    questionText: string;
+    timestamp: number;
+  } | null;
   signUp: (email: string, password: string, name?: string) => Promise<{ success: boolean; message?: string }>;
   login: (email: string, password: string) => Promise<void>;
   signInAnonymously: () => Promise<void>;
@@ -34,6 +39,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAnonymousUser, setIsAnonymousUser] = useState(false);
   const [dailyQuestionCount, setDailyQuestionCount] = useState(0);
   const [dailyLimit, setDailyLimit] = useState(ANON_LIMIT);
+  const [pendingQuestion, setPendingQuestion] = useState<{
+    questionId: Id<"history">;
+    questionText: string;
+    timestamp: number;
+  } | null>(null);
   const posthog = usePostHog();
 
   const signUpMutation = useMutation(api.auth.signUp);
@@ -74,6 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       setDailyLimit(currentLimit);
       setDailyQuestionCount(currentCount);
+      setPendingQuestion(userProfile.pendingQuestion || null);
       
       if (posthog) {
         posthog.identify(
@@ -92,6 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
        setIsAnonymousUser(false);
        setDailyQuestionCount(0);
        setDailyLimit(ANON_LIMIT);
+       setPendingQuestion(null);
        if (posthog) {
           posthog.reset();
        }
@@ -107,6 +119,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsAnonymousUser(false);
         setDailyQuestionCount(0);
         setDailyLimit(ANON_LIMIT);
+        setPendingQuestion(null);
     }
   };
 
@@ -191,6 +204,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isAnonymousUser,
         dailyQuestionCount,
         dailyLimit,
+        pendingQuestion,
         signUp,
         login,
         signInAnonymously,

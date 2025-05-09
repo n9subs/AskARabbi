@@ -27,6 +27,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if the user has a pending question
+    const userProfile = await convex.query(api.users.getUserProfile, { userId: userId as Id<"users"> });
+    if (userProfile?.pendingQuestion) {
+      return NextResponse.json(
+        { error: "יש לך שאלה ממתינה. אנא המתן לתשובה לפני שליחת שאלה חדשה." },
+        { status: 409 } // Conflict status code
+      );
+    }
+
     // --- Rate Limiting Check --- 
     try {
       await convex.action(api.rateLimit.checkAndIncrement, { userId: userId as Id<"users"> });
@@ -43,23 +52,43 @@ export async function POST(request: NextRequest) {
     }
     // --- End Rate Limiting Check ---
 
-    // Query Groq API with the question
-    const aiAnswer = await queryAIAPI(question);
-
-    // Add to user's history - pass the object directly
-    await convex.mutation(api.history.add, {
-      userId,
-      question,
-      answer: {
-        tanakh: aiAnswer.tanakh,
-        talmud: aiAnswer.talmud,
-        web: aiAnswer.web,
-        summary: aiAnswer.summary,
-      },
+    // First, create a history entry with empty answer
+    const historyId = await convex.mutation(api.history.createWithEmptyAnswer, {
+      userId: userId as Id<"users">,
+      question: question.trim(),
     });
 
-    // Return the answer as JSON
-    return NextResponse.json({ answer: aiAnswer });
+    // Set pending question immediately
+    await convex.mutation(api.users.setPendingQuestion, {
+      userId: userId as Id<"users">,
+      questionId: historyId,
+      questionText: question.trim(),
+    });
+
+    // Then asynchronously query the AI API
+    queryAIAPI(question.trim())
+      .then(async (aiAnswer) => {
+        // Update the history item with the actual answer
+        await convex.mutation(api.history.updateAnswer, {
+          historyId,
+          answer: {
+            tanakh: aiAnswer.tanakh,
+            talmud: aiAnswer.talmud,
+            web: aiAnswer.web,
+            summary: aiAnswer.summary,
+          },
+        });
+      })
+      .catch((error) => {
+        console.error('Error processing AI answer:', error);
+      });
+
+    // Return success immediately with pending status
+    return NextResponse.json({ 
+      status: "pending",
+      message: "השאלה התקבלה ומעובדת. התשובה תופיע בקרוב.",
+      historyId: historyId
+    });
   } catch (error) {
     console.error('Error processing question:', error);
     const message = error instanceof Error ? error.message : 'אירעה שגיאה בעיבוד השאלה';

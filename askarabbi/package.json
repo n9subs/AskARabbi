@@ -11,10 +11,16 @@
   "dependencies": {
     "@clerk/clerk-react": "^5.31.1",
     "@google/generative-ai": "^0.12.0",
+    "@react-three/drei": "^10.0.7",
+    "@react-three/fiber": "^9.1.2",
+    "@types/animejs": "^3.1.13",
+    "@types/three": "^0.176.0",
+    "animejs": "^4.0.2",
     "convex": "^1.24.1",
     "groq": "^3.87.1",
     "groq-sdk": "^0.21.0",
     "i18next": "^25.0.2",
+    "lottie-react": "^2.4.1",
     "mime": "^4.0.7",
     "next": "15.3.1",
     "next-i18next": "^15.4.2",
@@ -23,7 +29,8 @@
     "react-dom": "^19.0.0",
     "react-i18next": "^15.5.1",
     "resend": "^4.5.1",
-    "rtl-detect": "^1.1.2"
+    "rtl-detect": "^1.1.2",
+    "three": "^0.176.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

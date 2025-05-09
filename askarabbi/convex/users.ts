@@ -1,4 +1,4 @@
-import { query, internalQuery, internalMutation } from "./_generated/server";
+import { query, internalQuery, internalMutation, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
 
@@ -18,6 +18,7 @@ export const getUserProfile = query({
       // Rate limiting info for display
       dailyQuestionCount: user.dailyQuestionCount ?? 0,
       lastQuestionDate: user.lastQuestionDate ?? 0,
+      pendingQuestion: user.pendingQuestion,
     };
   },
 });
@@ -59,4 +60,48 @@ export const incrementQuestionCount = internalMutation({
             lastQuestionDate: now, // Store timestamp of this question
         });
     },
+});
+
+// Set pending question for a user
+export const setPendingQuestion = mutation({
+    args: { 
+        userId: v.id("users"),
+        questionId: v.id("history"),
+        questionText: v.string(),
+    },
+    handler: async (ctx, args) => {
+        const now = Date.now();
+        await ctx.db.patch(args.userId, {
+            pendingQuestion: {
+                questionId: args.questionId,
+                questionText: args.questionText,
+                timestamp: now,
+            }
+        });
+        
+        return { success: true };
+    }
+});
+
+// Clear pending question for a user
+export const clearPendingQuestion = mutation({
+    args: { userId: v.id("users") },
+    handler: async (ctx, args) => {
+        await ctx.db.patch(args.userId, {
+            pendingQuestion: undefined
+        });
+        
+        return { success: true };
+    }
+});
+
+// Check if user has a pending question
+export const hasPendingQuestion = query({
+    args: { userId: v.id("users") },
+    handler: async (ctx, args) => {
+        const user = await ctx.db.get(args.userId);
+        if (!user) return false;
+        
+        return !!user.pendingQuestion;
+    }
 }); 

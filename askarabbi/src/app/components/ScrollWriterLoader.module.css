@@ -1,0 +1,31 @@
+.loaderContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 320px; /* Slightly adjusted max-width */
+  margin: 0 auto;
+  position: relative;
+  height: 150px; /* Give a fixed height to prevent layout shifts */
+}
+
+.scrollSvg {
+  width: 100%;
+  height: 100px; /* Fixed height for the SVG viewBox */
+  overflow: visible;
+}
+
+.scrollText {
+  white-space: pre;
+  transition: opacity 0.3s ease-in-out;
+  font-weight: 500; /* Make text a bit bolder */
+}
+
+/* CSS for .quillPen and @keyframes writingBob removed as they are no longer used */
+
+/* This class is kept for potential future use or if loaderContainer needs a sibling for messages */
+.loadingMessage {
+  height: 1em; /* Minimal height if used, effectively hidden if empty */
+  margin-top: 5px;
+} 
