@@ -181,6 +181,11 @@ export default function Home() {
     e.preventDefault();
     
     if (!question.trim()) return;
+
+    if (question.trim().length < 10) {
+      setError("השאלה חייבת להכיל לפחות 10 תווים.");
+      return;
+    }
     
     // Prevent submission if there's a pending question (regardless of answer state)
     if (pendingQuestion) {
@@ -379,9 +384,9 @@ export default function Home() {
               <div className="flex justify-end">
                 <button
                   type="submit"
-                  disabled={isLoading || !question.trim() || !!pendingQuestion}
+                  disabled={isLoading || !question.trim() || !!pendingQuestion || question.trim().length < 10}
                   className={`${
-                    isLoading || !question.trim() || !!pendingQuestion
+                    isLoading || !question.trim() || !!pendingQuestion || question.trim().length < 10
                       ? "bg-gray-300 cursor-not-allowed"
                       : "bg-[var(--primary)] hover:bg-opacity-90"
                   } px-6 py-2 rounded-md text-white text-lg transition-colors duration-150 ease-in-out font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]`}

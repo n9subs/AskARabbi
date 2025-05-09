@@ -1,7 +1,7 @@
 import React from 'react';
 
-// Regex to find URLs (http, https, or www)
-const urlRegex = /(\b(?:https?:\/\/|www\.)[-\w+&@#/%?=~|!:,.;]*[-\w+&@#/%=~|])/g;
+// Regex to find URLs (http, https, www, or .com/.org/.org.il/.ac.il endings)
+const urlRegex = /(\b(?:https?:\/\/|www\.)[-\w+&@#\/%?=~|!:,.;]*[-\w+&@#\/%=~|]|\b[-\w+&@#\/%?=~|!:,.;]+\.(?:com|org|org\.il|ac\.il)\b)/gi;
 
 interface LinkifyProps {
   text: string | null | undefined;
@@ -26,9 +26,9 @@ const Linkify: React.FC<LinkifyProps> = ({ text }) => {
           let href = part;
           let trailingPunctuation = '';
 
-          // Prepend http:// if the URL starts with www. and doesn't have a protocol
-          if (href.startsWith('www.')) {
-            href = `http://${href}`;
+          // Prepend http:// if the URL doesn't have a protocol
+          if (!href.match(/^https?:\/\//i)) {
+            href = `https://${href}`;
           }
           
           // Simple check for common trailing punctuation
