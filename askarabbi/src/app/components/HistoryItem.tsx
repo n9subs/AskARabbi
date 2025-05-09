@@ -26,6 +26,38 @@ interface HistoryItemProps {
 
 const HistoryItem: React.FC<HistoryItemProps> = ({ item, onDeleteClick }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showShareConfirmation, setShowShareConfirmation] = useState(false);
+
+  const handleShare = async () => {
+    const answerParts = [];
+    if (item.answer.tanakh) answerParts.push(`מהתנ\"ך:\n${item.answer.tanakh}`);
+    if (item.answer.talmud) answerParts.push(`מהתלמוד וההלכה:\n${item.answer.talmud}`);
+    if (item.answer.web) answerParts.push(`ממקורות מודרניים:\n${item.answer.web}`);
+    if (item.answer.summary) answerParts.push(`לסיכום:\n${item.answer.summary}`);
+
+    const shareText = `שאלה: ${item.question}\n\nתשובה:\n${answerParts.join('\n\n')}`;
+
+    const isMobile = /Mobi/i.test(navigator.userAgent);
+
+    if (isMobile && navigator.share) {
+      try {
+        await navigator.share({
+          title: 'תשובה מהיסטוריית שאלת\'רב',
+          text: shareText,
+        });
+      } catch (err) {
+        console.error('Error using Web Share API:', err);
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(shareText);
+        setShowShareConfirmation(true);
+        setTimeout(() => setShowShareConfirmation(false), 2000);
+      } catch (err) {
+        console.error('Failed to copy text: ', err);
+      }
+    }
+  };
 
   return (
     <div className="bg-white p-5 rounded-lg shadow-md border border-gray-200 hover:shadow-lg transition-shadow duration-300 ease-in-out">
@@ -41,7 +73,22 @@ const HistoryItem: React.FC<HistoryItemProps> = ({ item, onDeleteClick }) => {
           </div>
 
           {/* Action Icons Container */}
-          <div className="flex items-center flex-shrink-0 space-x-2 space-x-reverse">
+          <div className="relative flex items-center flex-shrink-0 space-x-2 space-x-reverse">
+            {/* Share Button */}
+            <button
+              onClick={handleShare}
+              className="p-2 bg-blue-100 text-blue-600 hover:bg-blue-200 hover:text-blue-800 rounded-full transition-colors duration-150 ease-in-out shadow"
+              title="העתק שאלה ותשובה ללוח"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92c0-1.61-1.31-2.92-2.92-2.92z"/>
+              </svg>
+            </button>
+            {showShareConfirmation && (
+              <div className="absolute top-[-20px] right-0 transform translate-x-1/2 bg-green-500 text-white text-xs rounded px-1.5 py-0.5">
+                הועתק!
+              </div>
+            )}
             {/* Delete Button - Now part of the header flow */}
             <button
               onClick={() => onDeleteClick(item._id)}

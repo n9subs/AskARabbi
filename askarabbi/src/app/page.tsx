@@ -39,6 +39,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const [checkingForAnswer, setCheckingForAnswer] = useState(false);
+  const [showShareConfirmation, setShowShareConfirmation] = useState(false);
 
   // State for disclaimer popup
   const [showDisclaimerPopup, setShowDisclaimerPopup] = useState(false);
@@ -290,6 +291,38 @@ export default function Home() {
     }
   };
 
+  const handleShare = async () => {
+    if (answer) {
+      const shareText = `שאלה: ${answer.questionAsked}\n\nתשובה:\n${answer.tanakh || ''}${answer.talmud ? `\n\nמהתלמוד וההלכה:\n${answer.talmud}` : ''}${answer.web ? `\n\nממקורות מודרניים:\n${answer.web}` : ''}${answer.summary ? `\n\nלסיכום:\n${answer.summary}` : ''}`;
+
+      const isMobile = /Mobi/i.test(navigator.userAgent);
+
+      if (isMobile && navigator.share) {
+        try {
+          await navigator.share({
+            title: 'תשובה מאתר שאלת\'רב',
+            text: shareText,
+          });
+          // Successfully shared via native share UI
+        } catch (err) {
+          console.error('Error using Web Share API:', err);
+          // If sharing fails (e.g., user cancels), we could optionally fall back
+          // to clipboard, but for now, let's stick to the original error logging.
+          // If specific errors like AbortError, do nothing more.
+        }
+      } else { // Fallback for desktop or unsupported/non-mobile user agents
+        try {
+          await navigator.clipboard.writeText(shareText);
+          setShowShareConfirmation(true);
+          setTimeout(() => setShowShareConfirmation(false), 2000);
+        } catch (err) {
+          console.error('Failed to copy text: ', err);
+          // Optionally, set an error message for sharing failure
+        }
+      }
+    }
+  };
+
   return (
     <RouteGuard>
       <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] dark:bg-[var(--background)] dark:text-[var(--foreground)] flex flex-col">
@@ -420,9 +453,21 @@ export default function Home() {
           {/* Answer Display */}
           {!isLoading && answer && (
             <div className="bg-[#FCF9F0] rounded-lg p-6 mb-8 border-2 border-[var(--secondary)]">
-              <div className="mb-4 p-3 bg-[#F0EADF] rounded">
+              <div className="relative mb-4 p-3 bg-[#F0EADF] rounded">
                 <h3 className="text-lg font-bold mb-2">השאלה שלך:</h3>
                 <p>{answer.questionAsked}</p>
+                <button 
+                  onClick={handleShare}
+                  className="absolute top-3 left-3 px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors text-xs"
+                  title="העתק שאלה ותשובה ללוח"
+                >
+                  שתף
+                </button>
+                {showShareConfirmation && (
+                  <div className="absolute top-3 left-16 mt-1 px-2 py-0.5 bg-green-500 text-white rounded text-xs">
+                    הועתק!
+                  </div>
+                )}
               </div>
               
               <div className="space-y-6">
