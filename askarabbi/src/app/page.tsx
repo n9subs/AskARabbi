@@ -7,7 +7,8 @@ import { useAuth } from "./providers/AuthProvider";
 import { useRouter } from "next/navigation";
 import Linkify from '@/utils/linkify';
 import dynamic from 'next/dynamic';
-// import Image from "next/image"; // Removed unused import
+import Image from "next/image";
+import logo from "../../public/logo.png";
 
 // Dynamically import the new ScrollWriterLoader
 const ScrollWriterLoader = dynamic(() => import('./components/ScrollWriterLoader'), { 
@@ -537,7 +538,7 @@ export default function Home() {
           </p>
           טוֹב לְהוֹדוֹת לָה&apos;
             <br />
-          <img src="/logo.png" alt="AskARabbi Logo" className="h-10 mx-auto" />
+          <Image src={logo} alt="AskARabbi Logo" className="h-10 mx-auto" width={40} height={40} />
         </footer>
       </div>
 

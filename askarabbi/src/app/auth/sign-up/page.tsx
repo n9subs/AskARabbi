@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
+import logo from "../../../../public/logo.png";
 import { useAuth } from "../../providers/AuthProvider";
 import { useRouter } from "next/navigation";
 
@@ -46,7 +48,7 @@ export default function SignUpPage() {
       <div className="max-w-md w-full space-y-8 bg-white p-8 sm:p-10 rounded-xl shadow-xl border border-gray-200">
         <div>
 
-            <img src="/logo.png" alt="AskARabbi Logo" className="h-16 mx-auto" />
+            <Image src={logo} alt="AskARabbi Logo" className="h-16 mx-auto" width={64} height={64} />
 
           <h2 className="mt-6 text-center text-3xl font-extrabold text-[var(--primary)]">
             הרשמה לשאלת&apos;רב

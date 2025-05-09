@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import Image from "next/image";
+import logo from "../../../../public/logo.png";
 import { useAuth } from "../../providers/AuthProvider";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function SignInPage() {
+function SignInClientLogic() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -40,29 +42,23 @@ export default function SignInPage() {
         console.error("Raw login error:", err.message); 
         const rawMsg = err.message;
 
-        // Attempt to extract the message after "ConvexError: " and before " at handler"
         const coreErrorMatch = rawMsg.match(/ConvexError:\s*(.*?)\s*at handler/);
         const coreErrorMessage = coreErrorMatch ? coreErrorMatch[1] : null;
 
         if (coreErrorMessage) {
-          // Use the extracted message directly if found
           displayError = coreErrorMessage;
-          // Optional: Further refine common messages if needed
           if (coreErrorMessage.includes("פרטי התחברות שגויים") || coreErrorMessage.includes("המשתמש אינו קיים")) {
-             displayError = "כתובת האימייל או הסיסמה שהוזנו שגויים."; // Overwrite with simpler message
+             displayError = "כתובת האימייל או הסיסמה שהוזנו שגויים.";
           }
-          // Keep the "יש לאמת..." message as is, since it contains useful info.
         } else {
-          // Fallback if regex fails: check raw message for keywords
           if (rawMsg.includes("פרטי התחברות שגויים") || rawMsg.includes("המשתמש אינו קיים")) {
             displayError = "כתובת האימייל או הסיסמה שהוזנו שגויים.";
           } else if (rawMsg.includes("יש לאמת את כתובת האימייל")) {
-            // Extract the known good string as a fallback
             displayError = "יש לאמת את כתובת האימייל לפני ההתחברות. נשלח אליך מייל אימות חדש."; 
-          } // Otherwise, the initial default generic error remains.
+          }
         }
       }
-      setError(displayError); // Set the cleaned, specific, or generic error
+      setError(displayError);
     } finally {
       setLoadingAction(null);
     }
@@ -186,9 +182,17 @@ export default function SignInPage() {
           <p>משתמשים אנונימיים: 5 שאלות.</p>
         </div>
 
-        <img src="/logo.png" alt="AskARabbi Logo" className="h-16 mx-auto" />
+        <Image src={logo} alt="AskARabbi Logo" className="h-16 mx-auto" width={64} height={64} />
 
       </div>
     </div>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[var(--background)]"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[var(--primary)]"></div><p className="ml-4 text-lg">טוען...</p></div>}>
+      <SignInClientLogic />
+    </Suspense>
   );
 } 

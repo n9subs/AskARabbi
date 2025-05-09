@@ -1,13 +1,15 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
+import Image from "next/image";
+import logo from "../../../../public/logo.png";
+import Link from 'next/link';
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { usePostHog } from 'posthog-js/react';
-import Link from 'next/link';
 
-export default function VerifyEmailPage() {
+function VerifyEmailClientLogic() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const verifyEmailMutation = useMutation(api.auth.verifyEmail);
@@ -63,9 +65,7 @@ export default function VerifyEmailPage() {
     <div dir="rtl" className="min-h-screen flex flex-col items-center justify-center bg-[var(--background)] py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 bg-white p-8 sm:p-10 rounded-xl shadow-xl border border-gray-200">
         <div>
-
-            <img src="/logo.png" alt="AskARabbi Logo" className="h-16 mx-auto" />
-
+            <Image src={logo} alt="AskARabbi Logo" className="h-16 mx-auto" width={64} height={64} />
           <h2 className="mt-6 text-center text-3xl font-extrabold text-[var(--primary)]">
             אימות כתובת אימייל
           </h2>
@@ -98,5 +98,13 @@ export default function VerifyEmailPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[var(--background)]"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[var(--primary)]"></div><p className="ml-4 text-lg">טוען...</p></div>}>
+      <VerifyEmailClientLogic />
+    </Suspense>
   );
 } 

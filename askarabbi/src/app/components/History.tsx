@@ -25,7 +25,7 @@ export default function History() {
               className="bg-white p-4 rounded-lg shadow-sm border border-gray-200"
             >
               <p className="font-medium text-gray-900">{item.question}</p>
-              <p className="mt-2 text-gray-600">{item.answer}</p>
+              <p className="mt-2 text-gray-600">{item.answer.tanakh}</p>
               <p className="mt-2 text-sm text-gray-400">
                 {new Date(item.timestamp).toLocaleString()}
               </p>

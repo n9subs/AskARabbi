@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import Image from "next/image";
+import logo from "../../../public/logo.png";
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../providers/AuthProvider';
 import RouteGuard from '../components/RouteGuard';
@@ -29,7 +31,6 @@ export default function HistoryPage() {
     if (posthog && userId) {
       posthog.capture('history_page_viewed');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [posthog, userId]);
 
   const handleDeleteClick = (historyItemId: Id<"history">) => {
@@ -162,7 +163,7 @@ export default function HistoryPage() {
 
         {/* Footer with Logo */}
         <footer className="p-4 bg-[var(--primary-muted)] text-center">
-          <img src="/logo.png" alt="AskARabbi Logo" className="h-10 mx-auto" />
+          <Image src={logo} alt="AskARabbi Logo" className="h-10 mx-auto" width={40} height={40} />
         </footer>
 
       </div>
