@@ -10,6 +10,7 @@ import Linkify from '@/utils/linkify';
 import dynamic from 'next/dynamic';
 import Image from "next/image";
 import logo from "../../public/logo.png";
+import OnboardingTour from './components/Onboarding/OnboardingTour';
 
 // Dynamically import the new ScrollWriterLoader
 const ScrollWriterLoader = dynamic(() => import('./components/ScrollWriterLoader'), { 
@@ -47,6 +48,7 @@ export default function Home() {
   const [showDisclaimerPopup, setShowDisclaimerPopup] = useState(false);
   const [rememberDisclaimerPreference, setRememberDisclaimerPreference] = useState(false);
   const [hasUserOptedOutOfDisclaimer, setHasUserOptedOutOfDisclaimer] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   const loadingTexts = [
     "מחפש תשובה.",
@@ -166,8 +168,15 @@ export default function Home() {
   }, [isLoading, loadingTexts.length]); // Added loadingTexts.length to dependency array
 
   useEffect(() => {
-    const optedOut = localStorage.getItem('hideAskARabbiDisclaimer') === 'true';
-    setHasUserOptedOutOfDisclaimer(optedOut);
+    const optedOutDisclaimer = localStorage.getItem('hideAskARabbiDisclaimer') === 'true';
+    setHasUserOptedOutOfDisclaimer(optedOutDisclaimer);
+
+    const hasCompletedTour = localStorage.getItem('hasCompletedOnboardingTour') === 'true';
+    if (!hasCompletedTour) {
+      setShowOnboarding(true);
+    } else {
+      setShowOnboarding(false); // Ensure it's false if already completed
+    }
   }, []);
 
   // Effect to show disclaimer popup when an answer is set and user hasn't opted out
@@ -328,6 +337,7 @@ export default function Home() {
   return (
     <RouteGuard>
       <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] dark:bg-[var(--background)] dark:text-[var(--foreground)] flex flex-col">
+        {showOnboarding && <OnboardingTour onComplete={() => setShowOnboarding(false)} />}
         {/* Header */}
         <header className="p-4 bg-[var(--primary)] text-[var(--background)]">
           <div className="container mx-auto flex justify-between items-center">
