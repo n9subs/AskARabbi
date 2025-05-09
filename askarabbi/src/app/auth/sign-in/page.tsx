@@ -186,6 +186,8 @@ export default function SignInPage() {
           <p>משתמשים אנונימיים: 5 שאלות.</p>
         </div>
 
+        <img src="/logo.png" alt="AskARabbi Logo" className="h-16 mx-auto" />
+
       </div>
     </div>
   );

@@ -159,6 +159,12 @@ export default function HistoryPage() {
           confirmText="מחק"
           cancelText="ביטול"
         />
+
+        {/* Footer with Logo */}
+        <footer className="p-4 bg-[var(--primary-muted)] text-center">
+          <img src="/logo.png" alt="AskARabbi Logo" className="h-10 mx-auto" />
+        </footer>
+
       </div>
     </RouteGuard>
   );

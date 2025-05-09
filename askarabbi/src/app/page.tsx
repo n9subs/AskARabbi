@@ -5,6 +5,7 @@ import { usePostHog } from 'posthog-js/react';
 import RouteGuard from "./components/RouteGuard";
 import { useAuth } from "./providers/AuthProvider";
 import { useRouter } from "next/navigation";
+import Linkify from '@/utils/linkify';
 // import Image from "next/image"; // Removed unused import
 
 export default function Home() {
@@ -292,14 +293,14 @@ export default function Home() {
                 {/* Tanakh Answer - Always shown */}
                 <div className="border-r-4 border-[#0d3677] pr-4">
                   <h3 className="text-xl font-bold mb-2 text-[#0d3677]">מהתנ&quot;ך</h3>
-                  <p className="leading-relaxed text-gray-700 whitespace-pre-wrap">{answer.tanakh}</p>
+                  <p className="leading-relaxed text-gray-700 whitespace-pre-wrap"><Linkify text={answer.tanakh || ""}/></p>
                 </div>
                 
                 {/* Talmud Answer - Conditional based on existence in response */}
                 {answer.talmud && (
                   <div className="border-r-4 border-[#7a5901] pr-4">
                     <h3 className="text-xl font-bold mb-2 text-[#7a5901]">מהתלמוד וההלכה</h3>
-                    <p className="leading-relaxed text-gray-700 whitespace-pre-wrap">{answer.talmud}</p>
+                    <p className="leading-relaxed text-gray-700 whitespace-pre-wrap"><Linkify text={answer.talmud || ""}/></p>
                   </div>
                 )}
                 
@@ -307,7 +308,7 @@ export default function Home() {
                 {answer.web && (
                   <div className="border-r-4 border-[#2a6b31] pr-4">
                     <h3 className="text-xl font-bold mb-2 text-[#2a6b31]">ממקורות מודרניים</h3>
-                    <p className="leading-relaxed text-gray-700 whitespace-pre-wrap">{answer.web}</p>
+                    <p className="leading-relaxed text-gray-700 whitespace-pre-wrap"><Linkify text={answer.web || ""}/></p>
                   </div>
                 )}
                 
@@ -315,7 +316,7 @@ export default function Home() {
                 {answer.summary && (
                   <div className="border-r-4 border-gray-500 pr-4 mt-6 pt-4 border-t border-gray-200">
                     <h3 className="text-xl font-bold mb-2 text-gray-700">לסיכום</h3>
-                    <p className="leading-relaxed text-gray-700 whitespace-pre-wrap">{answer.summary}</p>
+                    <p className="leading-relaxed text-gray-700 whitespace-pre-wrap"><Linkify text={answer.summary || ""}/></p>
                   </div>
                 )}
               </div>
@@ -347,6 +348,8 @@ export default function Home() {
             >אן9 רקורדס</a> באהבה ❤️
           </p>
           טוֹב לְהוֹדוֹת לָה&apos;
+            <br />
+          <img src="/logo.png" alt="AskARabbi Logo" className="h-10 mx-auto" />
         </footer>
       </div>
 
