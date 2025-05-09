@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { mutation } from "./_generated/server";
 import { ConvexError } from "convex/values";
-import { Id } from "./_generated/dataModel";
+// import { Id } from "./_generated/dataModel"; // Removed unused import
 import { internal } from "./_generated/api";
 
 // Simple hash function that works in V8 isolate
@@ -32,6 +32,7 @@ export const signUp = mutation({
     email: v.string(),
     password: v.string(),
     name: v.optional(v.string()),
+    termsAcceptedAt: v.number(),
   },
   handler: async (ctx, args) => {
     const existingUser = await ctx.db
@@ -54,6 +55,7 @@ export const signUp = mutation({
       isEmailVerified: false, 
       verificationToken,
       lastLoginAt: Date.now(), // Consider if this should be null until first verified login
+      termsAcceptedAt: args.termsAcceptedAt,
       dailyQuestionCount: 0,
       lastQuestionDate: 0, // Initialize to 0, will be set on first question
     });
@@ -112,11 +114,14 @@ export const signInAnonymously = mutation({
     existingAnonymousId: v.optional(v.id("users")),
   },
   handler: async (ctx, args) => {
+    const termsAcceptedTimestamp = Date.now();
     if (args.existingAnonymousId) {
       const existingUser = await ctx.db.get(args.existingAnonymousId);
       if (existingUser && existingUser.isAnonymous) {
-        // Found existing anonymous user, update last login and return it
-        await ctx.db.patch(existingUser._id, { lastLoginAt: Date.now() });
+        await ctx.db.patch(existingUser._id, { 
+          lastLoginAt: Date.now(),
+          termsAcceptedAt: termsAcceptedTimestamp,
+        });
         return { userId: existingUser._id, isNew: false };
       }
       // If ID provided but user not found or not anonymous, 
@@ -128,6 +133,7 @@ export const signInAnonymously = mutation({
       isAnonymous: true,
       isEmailVerified: false, 
       lastLoginAt: Date.now(),
+      termsAcceptedAt: termsAcceptedTimestamp,
       dailyQuestionCount: 0,
       lastQuestionDate: 0, // Initialize to 0
     });

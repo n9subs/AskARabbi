@@ -5,6 +5,8 @@ import Image from "next/image";
 import logo from "../../../../public/logo.png";
 import { useAuth } from "../../providers/AuthProvider";
 import { useRouter } from "next/navigation";
+import Link from 'next/link';
+import { usePostHog } from 'posthog-js/react';
 
 export default function SignUpPage() {
   const [email, setEmail] = useState("");
@@ -12,8 +14,10 @@ export default function SignUpPage() {
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [isLoadingState, setIsLoadingState] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const { signUp, userId, isLoading: authProviderLoading } = useAuth();
   const router = useRouter();
+  const posthog = usePostHog();
 
   useEffect(() => {
     if (!authProviderLoading && userId) {
@@ -24,9 +28,18 @@ export default function SignUpPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    if (!termsAccepted) {
+      setError("חובה לאשר את תנאי השימוש ומדיניות הפרטיות.");
+      return;
+    }
+
     setIsLoadingState(true);
     try {
       await signUp(email, password, name);
+      if (posthog) {
+        posthog.capture('terms_accepted_signup', { accepted_at: new Date().toISOString() });
+      }
       router.push("/auth/sign-in?registered=true");
     } catch (err) {
       setError(err instanceof Error ? err.message : "אירעה שגיאה בהרשמה. נסה שנית.");
@@ -103,10 +116,32 @@ export default function SignUpPage() {
             <div className="text-red-500 text-sm text-center p-2 bg-red-50 border border-red-300 rounded-md">{error}</div>
           )}
 
-          <div>
+          <div className="flex items-center mt-4">
+            <input
+              id="terms-and-conditions"
+              name="terms-and-conditions"
+              type="checkbox"
+              checked={termsAccepted}
+              onChange={(e) => setTermsAccepted(e.target.checked)}
+              className="h-4 w-4 text-[var(--primary)] border-gray-300 rounded focus:ring-[var(--primary)] accent-[var(--primary)]"
+            />
+            <label htmlFor="terms-and-conditions" className="ml-2 mr-2 block text-sm text-gray-700">
+              אני מאשר/ת שקראתי ואני מסכים/ה ל
+              <Link href="/terms" target="_blank" className="font-medium text-[var(--primary)] hover:text-[var(--secondary)] underline px-1">
+                תנאי השימוש
+              </Link>
+              ול
+              <Link href="/privacy" target="_blank" className="font-medium text-[var(--primary)] hover:text-[var(--secondary)] underline px-1">
+                מדיניות הפרטיות
+              </Link>
+              .
+            </label>
+          </div>
+
+          <div className="mt-6">
             <button
               type="submit"
-              disabled={isLoadingState}
+              disabled={isLoadingState || !termsAccepted}
               className="group relative w-full flex justify-center py-2.5 px-4 border border-transparent text-sm font-medium rounded-full text-[var(--background)] bg-[var(--primary)] hover:bg-[var(--secondary)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary)] disabled:opacity-70 transition-colors"
             >
               {isLoadingState ? (

@@ -5,6 +5,7 @@ import { usePostHog } from 'posthog-js/react';
 import RouteGuard from "./components/RouteGuard";
 import { useAuth } from "./providers/AuthProvider";
 import { useRouter } from "next/navigation";
+import Link from 'next/link';
 import Linkify from '@/utils/linkify';
 import dynamic from 'next/dynamic';
 import Image from "next/image";
@@ -520,10 +521,11 @@ export default function Home() {
         </main>
         <footer className="py-6 text-center text-sm text-[var(--foreground)] text-opacity-75">
           <p>
-            שאלת&apos;רב מופעל על ידי <a 
-              href="https://n9records.com/" 
-              target="_blank" 
-              rel="noopener noreferrer" 
+            שאלת&apos;רב מופעל על ידי{' '}
+            <a
+              href="https://n9records.com/"
+              target="_blank"
+              rel="noopener noreferrer"
               className="underline hover:text-[var(--primary)] transition-colors"
               onClick={() => {
                 if (posthog) {
@@ -534,11 +536,22 @@ export default function Home() {
                   });
                 }
               }}
-            >אן9 רקורדס</a> באהבה ❤️
+            >
+              אן9 רקורדס
+            </a>{' '}
+            באהבה ❤️
           </p>
-          טוֹב לְהוֹדוֹת לָה&apos;
-            <br />
-          <Image src={logo} alt="AskARabbi Logo" className="h-10 mx-auto" width={40} height={40} />
+          <div className="mt-2 space-x-4 space-x-reverse">
+            <Link href="/terms" className="underline hover:text-[var(--primary)] transition-colors">
+              תנאי שימוש
+            </Link>
+            <a></a>
+            <Link href="/privacy" className="underline hover:text-[var(--primary)] transition-colors">
+              מדיניות פרטיות
+            </Link>
+          </div>
+          <p className="mt-2">טוֹב לְהוֹדוֹת לָה&apos;</p>
+          <Image src={logo} alt="AskARabbi Logo" className="h-10 mx-auto mt-2" width={40} height={40} />
         </footer>
       </div>
 

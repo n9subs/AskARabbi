@@ -125,7 +125,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string, name?: string) => {
     try {
-      await signUpMutation({ email, password, name });
+      await signUpMutation({ email, password, name, termsAcceptedAt: Date.now() });
       if (posthog) {
         posthog.capture('user_signed_up', { 
             email: email,

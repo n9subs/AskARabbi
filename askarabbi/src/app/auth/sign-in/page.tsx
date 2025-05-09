@@ -5,6 +5,8 @@ import Image from "next/image";
 import logo from "../../../../public/logo.png";
 import { useAuth } from "../../providers/AuthProvider";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from 'next/link';
+import { usePostHog } from 'posthog-js/react';
 
 function SignInClientLogic() {
   const [email, setEmail] = useState("");
@@ -15,6 +17,7 @@ function SignInClientLogic() {
   const { login, signInAnonymously, userId, isLoading: authProviderLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const posthog = usePostHog();
 
   useEffect(() => {
     if (!authProviderLoading && userId) {
@@ -70,6 +73,9 @@ function SignInClientLogic() {
     setLoadingAction("anonymous");
     try {
       await signInAnonymously();
+      if (posthog) {
+        posthog.capture('terms_accepted_guest', { accepted_at: new Date().toISOString() });
+      }
       router.push("/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "אירעה שגיאה בהתחברות כאורח.");
@@ -166,6 +172,20 @@ function SignInClientLogic() {
             </button>
           </div>
         </form>
+
+        <div className="text-center text-xs text-gray-500 mt-2">
+          <p>
+            על ידי המשך כאורח, אתה מסכים ל
+            <Link href="/terms" className="underline hover:text-[var(--primary)] transition-colors">
+              תנאי השימוש
+            </Link>
+            {' ול'}
+            <Link href="/privacy" className="underline hover:text-[var(--primary)] transition-colors">
+              מדיניות הפרטיות
+            </Link>
+            {' שלנו.'}
+          </p>
+        </div>
 
         <div className="text-center text-sm">
           <p>
