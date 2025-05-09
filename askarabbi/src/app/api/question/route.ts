@@ -6,6 +6,9 @@ import { Id } from "../../../../convex/_generated/dataModel"; // Import Id if ne
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
+const MIN_QUESTION_LENGTH = 10;
+const MAX_QUESTION_LENGTH = 10000; // Example max length
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -19,10 +22,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate input
-    if (!question || typeof question !== 'string' || question.trim().length === 0) {
+    const trimmedQuestion = question ? String(question).trim() : "";
+
+    if (trimmedQuestion.length < MIN_QUESTION_LENGTH) {
       return NextResponse.json(
-        { error: 'Question is required' },
+        { error: `השאלה חייבת להכיל לפחות ${MIN_QUESTION_LENGTH} תווים.` },
+        { status: 400 }
+      );
+    }
+    if (trimmedQuestion.length > MAX_QUESTION_LENGTH) {
+      return NextResponse.json(
+        { error: `השאלה ארוכה מדי (מקסימום ${MAX_QUESTION_LENGTH} תווים).` },
         { status: 400 }
       );
     }
@@ -42,11 +52,11 @@ export async function POST(request: NextRequest) {
     } catch (error: unknown) {
       let errorMessage = "שגיאת מכסת שימוש.";
       if (error instanceof Error) {
-        console.warn("Rate limit hit for user:", userId, error.message);
+        // console.warn("Rate limit hit for user:", userId, error.message);
         const rateLimitMessageMatch = error.message?.match(/ConvexError:\s*(.*?)\s*at context/);
         errorMessage = rateLimitMessageMatch ? rateLimitMessageMatch[1] : errorMessage;
       } else {
-        console.warn("Rate limit check threw non-Error object:", error);
+        // console.warn("Rate limit check threw non-Error object:", error);
       }
       return NextResponse.json({ error: errorMessage }, { status: 429 });
     }
@@ -55,18 +65,18 @@ export async function POST(request: NextRequest) {
     // First, create a history entry with empty answer
     const historyId = await convex.mutation(api.history.createWithEmptyAnswer, {
       userId: userId as Id<"users">,
-      question: question.trim(),
+      question: trimmedQuestion,
     });
 
     // Set pending question immediately
     await convex.mutation(api.users.setPendingQuestion, {
       userId: userId as Id<"users">,
       questionId: historyId,
-      questionText: question.trim(),
+      questionText: trimmedQuestion,
     });
 
     // Then asynchronously query the AI API
-    queryAIAPI(question.trim())
+    queryAIAPI(trimmedQuestion)
       .then(async (aiAnswer) => {
         // Update the history item with the actual answer
         await convex.mutation(api.history.updateAnswer, {
@@ -89,10 +99,10 @@ export async function POST(request: NextRequest) {
       message: "השאלה התקבלה ומעובדת. התשובה תופיע בקרוב.",
       historyId: historyId
     });
-  } catch (error) {
+  } catch (error: any) { // Catch as any to access message
     console.error('Error processing question:', error);
     const message = error instanceof Error ? error.message : 'אירעה שגיאה בעיבוד השאלה';
-    const status = message.includes("Rate limit") ? 429 : 500; // Check if it was a rate limit error somehow missed
+    const status = message.includes("Rate limit") ? 429 : (error?.status === 401 || error?.status === 400 || error?.status === 409 ? error.status : 500);
     return NextResponse.json({ error: message }, { status });
   }
 } 

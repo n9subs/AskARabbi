@@ -35,7 +35,7 @@
     }
   ],
   "prefer_related_applications": false,
-  "categories": ["education", "religion", "reference", "questions",],
+  "categories": ["education", "religion", "reference", "questions"],
   "lang": "he-IL",
   "dir": "rtl"
 } 

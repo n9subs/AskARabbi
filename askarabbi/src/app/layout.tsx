@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Rubik } from "next/font/google";
 import "./globals.css";
 import { PostHogProvider } from "./providers";
@@ -81,6 +81,9 @@ export const metadata: Metadata = {
   applicationName: "AskARabbi",
   category: "education",
   manifest: "/manifest.json",
+};
+
+export const viewport: Viewport = {
   themeColor: "#0e7490",
 };
 
@@ -93,7 +96,6 @@ export default function RootLayout({
     <html lang="he" dir="rtl">
       <head>
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#0e7490" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${hebrewFont.variable} antialiased font-hebrew`}
