@@ -51,7 +51,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, onStepChang
   const steps: OnboardingStep[] = useMemo(() => [
     {
       id: 'welcome',
-      title: 'ברוכים הבאים ל&quot;שאלת&apos;רב&quot;!',
+      title: 'ברוכים הבאים ל"שאלת\'רב"!',
       content: (
         <>
         <br/>
@@ -65,7 +65,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, onStepChang
       content: (
         <>
         <br/>
-          <p style={{ textAlign: 'right' }}>פשוט הקלד את שאלתך בשדה הקלט הראשי ולחץ על קונטרול ואנטר ביחד או על כפתור &quot;שלח שאלה&quot;.</p>
+          <p style={{ textAlign: 'right' }}>פשוט הקלד את שאלתך בשדה הקלט הראשי ולחץ על קונטרול ואנטר ביחד או על כפתור {'"שלח שאלה"'}.</p>
           <br/>
           <p style={{ textAlign: 'right' }}><strong>דוגמאות לשאלות:</strong></p>
           <ul style={{ textAlign: 'right', listStylePosition: 'inside' }}>

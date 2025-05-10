@@ -97,7 +97,7 @@ function SignInClientLogic() {
       <div className="max-w-md w-full space-y-8 bg-white p-8 sm:p-10 rounded-xl shadow-xl border border-gray-200">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-[var(--primary)]">
-            התחברות לשאלת&apos;רב
+            התחברות לשאלת&apos;רב!
           </h2>
         </div>
 
