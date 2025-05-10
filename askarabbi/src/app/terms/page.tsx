@@ -52,7 +52,7 @@ export default function TermsOfServicePage() {
       <section>
         <h2 className="text-2xl font-semibold mb-3">יצירת קשר</h2>
         <p className="mb-2">
-          בכל שאלה או הבהרה בנוגע לתנאי שימוש אלו, ניתן לפנות אלינו בדוא"ל:
+          בכל שאלה או הבהרה בנוגע לתנאי שימוש אלו, ניתן לפנות אלינו בדוא&quot;ל:
         </p>
         <ul className="list-disc list-inside space-y-1 mb-2">
           <li>לשאלות כלליות: <a href="mailto:ask@askarabbi.online" className="underline hover:text-[var(--primary)]">ask@askarabbi.online</a></li>

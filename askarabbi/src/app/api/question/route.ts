@@ -99,10 +99,14 @@ export async function POST(request: NextRequest) {
       message: "השאלה התקבלה ומעובדת. התשובה תופיע בקרוב.",
       historyId: historyId
     });
-  } catch (error: any) { // Catch as any to access message
+  } catch (error: unknown) { // Catch as any to access message
     console.error('Error processing question:', error);
     const message = error instanceof Error ? error.message : 'אירעה שגיאה בעיבוד השאלה';
-    const status = message.includes("Rate limit") ? 429 : (error?.status === 401 || error?.status === 400 || error?.status === 409 ? error.status : 500);
+    const status = message.includes("Rate limit") ? 429 : (
+      typeof error === 'object' && error !== null && 'status' in error && 
+      (error.status === 401 || error.status === 400 || error.status === 409) ? 
+      (error as {status: number}).status : 500
+    );
     return NextResponse.json({ error: message }, { status });
   }
 } 

@@ -25,7 +25,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, onStepChang
   const markOnboardingAsCompleteMutation = useMutation(api.auth.markOnboardingComplete);
   const posthog = usePostHog();
 
-  const initialPopoverStyle: React.CSSProperties = {
+  const initialPopoverStyle: React.CSSProperties = useMemo(() => ({
     position: 'fixed',
     backgroundColor: 'var(--background-card, white)',
     color: 'var(--foreground-card, #333)',
@@ -40,7 +40,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, onStepChang
     transform: 'translate(-50%, -50%)',
     width: '400px',
     maxWidth: '90vw',
-  };
+  }), []);
 
   const [dynamicPopoverStyle, setDynamicPopoverStyle] = useState<React.CSSProperties>(initialPopoverStyle);
   const [arrowStyle, setArrowStyle] = useState<React.CSSProperties | null>(null);
@@ -51,7 +51,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, onStepChang
   const steps: OnboardingStep[] = useMemo(() => [
     {
       id: 'welcome',
-      title: 'ברוכים הבאים ל"שאלת\'רב"!',
+      title: 'ברוכים הבאים ל&quot;שאלת&apos;רב&quot;!',
       content: (
         <>
         <br/>
@@ -65,7 +65,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, onStepChang
       content: (
         <>
         <br/>
-          <p style={{ textAlign: 'right' }}>פשוט הקלד את שאלתך בשדה הקלט הראשי ולחץ על קונטרול ואנטר ביחד או על כפתור "שלח שאלה".</p>
+          <p style={{ textAlign: 'right' }}>פשוט הקלד את שאלתך בשדה הקלט הראשי ולחץ על קונטרול ואנטר ביחד או על כפתור &quot;שלח שאלה&quot;.</p>
           <br/>
           <p style={{ textAlign: 'right' }}><strong>דוגמאות לשאלות:</strong></p>
           <ul style={{ textAlign: 'right', listStylePosition: 'inside' }}>
@@ -345,7 +345,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, onStepChang
         highlightedElement.style.boxShadow = '';
       }
     };
-  }, [showTour, currentStepIndex, steps, auth.isLoading, actualPopoverHeight]);
+  }, [showTour, currentStepIndex, steps, auth.isLoading, actualPopoverHeight, initialPopoverStyle]);
 
   if (!showTour || currentStepIndex >= steps.length) {
     return null;

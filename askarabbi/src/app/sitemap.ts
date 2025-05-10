@@ -2,12 +2,6 @@ import { MetadataRoute } from 'next';
 
 const BASE_URL = 'https://askarabbi.online';
 
-// Define a type for the question object
-interface Question {
-  _id: string;
-  _creationTime: number;
-}
-
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Static pages
   const staticRoutes: MetadataRoute.Sitemap = [
