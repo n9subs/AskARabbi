@@ -19,6 +19,7 @@ export const getUserProfile = query({
       dailyQuestionCount: user.dailyQuestionCount ?? 0,
       lastQuestionDate: user.lastQuestionDate ?? 0,
       pendingQuestion: user.pendingQuestion,
+      hasCompletedOnboarding: user.hasCompletedOnboarding,
     };
   },
 });

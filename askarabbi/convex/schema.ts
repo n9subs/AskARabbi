@@ -18,6 +18,7 @@ export default defineSchema({
       questionText: v.string(),
       timestamp: v.number(),
     })),
+    hasCompletedOnboarding: v.optional(v.boolean()),
   }),
   history: defineTable({
     userId: v.id("users"),

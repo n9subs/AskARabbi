@@ -170,4 +170,52 @@ export const verifyEmail = mutation({
 
     return { userId: user._id, alreadyVerified: false };
   },
+});
+
+export const markOnboardingComplete = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      // Not logged in, or session expired. Can't mark onboarding for a non-user.
+      // Depending on requirements, you might throw an error or just return silently.
+      // For now, let's assume this is called by an authenticated user.
+      // If it's critical to handle non-auth state, add error handling or specific return.
+      console.warn("Attempted to mark onboarding complete for unauthenticated user.");
+      return { success: false, error: "User not authenticated" };
+    }
+
+    // The `tokenIdentifier` includes the issuer, e.g. `https://<YOUR_DOMAIN>.clerk.accounts.dev|<USER_ID>`
+    // Or if you are storing user by subject `identity.subject`
+    // We need to find the user by a field that matches how you store users from Clerk
+    // Assuming you store users by `identity.subject` in a field like `clerkId` or similar,
+    // or by email if that's unique and verified.
+    // For this example, let's assume you have an `email` field that is reliably the identifier
+    // or that your user system identifies users uniquely through `identity.subject` as `userId` or similar.
+
+    // Let's assume user is identified by `identity.subject` stored as the document ID `_id` or a specific indexed field.
+    // If your user._id is NOT the clerk identity.subject, you'll need a query here.
+    // e.g. const user = await ctx.db.query("users").filter(q => q.eq(q.field("clerkId"), identity.subject)).unique();
+    // For now, this example assumes identity.subject is NOT directly the user._id and we need to query by email
+    // which is a common pattern if Clerk is just one of the auth providers.
+    // A more robust way if using Clerk exclusively is to store `identity.subject` in an indexed `clerkId` field.
+
+    if (!identity.email) {
+        console.warn("User identity does not have an email to mark onboarding.");
+        return { success: false, error: "User email not available in identity" };
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("email"), identity.email))
+      .first();
+
+    if (!user) {
+      console.warn(`User not found with email: ${identity.email} to mark onboarding complete.`);
+      return { success: false, error: "User not found" };
+    }
+
+    await ctx.db.patch(user._id, { hasCompletedOnboarding: true });
+    return { success: true };
+  },
 }); 

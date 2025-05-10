@@ -23,6 +23,7 @@ interface AuthContextType {
     questionText: string;
     timestamp: number;
   } | null;
+  hasCompletedOnboarding: boolean | null;
   signUp: (email: string, password: string, name?: string) => Promise<{ success: boolean; message?: string }>;
   login: (email: string, password: string) => Promise<void>;
   signInAnonymously: () => Promise<void>;
@@ -44,6 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     questionText: string;
     timestamp: number;
   } | null>(null);
+  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState<boolean | null>(null);
   const posthog = usePostHog();
 
   const signUpMutation = useMutation(api.auth.signUp);
@@ -85,6 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setDailyLimit(currentLimit);
       setDailyQuestionCount(currentCount);
       setPendingQuestion(userProfile.pendingQuestion || null);
+      setHasCompletedOnboarding(userProfile.hasCompletedOnboarding ?? false);
       
       if (posthog) {
         posthog.identify(
@@ -104,6 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
        setDailyQuestionCount(0);
        setDailyLimit(ANON_LIMIT);
        setPendingQuestion(null);
+       setHasCompletedOnboarding(false);
        if (posthog) {
           posthog.reset();
        }
@@ -120,6 +124,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setDailyQuestionCount(0);
         setDailyLimit(ANON_LIMIT);
         setPendingQuestion(null);
+        setHasCompletedOnboarding(false);
     }
   };
 
@@ -205,6 +210,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         dailyQuestionCount,
         dailyLimit,
         pendingQuestion,
+        hasCompletedOnboarding,
         signUp,
         login,
         signInAnonymously,

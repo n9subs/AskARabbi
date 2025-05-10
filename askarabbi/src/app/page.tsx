@@ -49,6 +49,9 @@ export default function Home() {
   const [rememberDisclaimerPreference, setRememberDisclaimerPreference] = useState(false);
   const [hasUserOptedOutOfDisclaimer, setHasUserOptedOutOfDisclaimer] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [currentTourStepId, setCurrentTourStepId] = useState<string | null>(null);
+  const [elementToElevateForTour, setElementToElevateForTour] = useState<string | null>(null);
+  const [isSubmissionDisabledByTour, setIsSubmissionDisabledByTour] = useState(false);
 
   const loadingTexts = [
     "מחפש תשובה.",
@@ -188,9 +191,31 @@ export default function Home() {
 
   const remainingQuestions = dailyLimit - dailyQuestionCount;
 
+  const defaultAnswerForTour = {
+    questionAsked: "כמה הקפות עושים בשמחה תורה?",
+    tanakh: `**
+אין בתנ"ך אזכור ישיר למנהג ההקפות עם ספרי תורה כפי שאנו נוהגים בשמחת תורה. חג שמחת תורה עצמו, כיום חג נפרד המציין את סיום קריאת התורה והתחלתה מחדש, התפתח בתקופה מאוחרת יותר. עם זאת, הרעיון של שמחה גדולה במצוות ובתורה מופיע במקומות רבים. למשל, בדברי דוד המלך בתהילים (קי"ט, קס"ב): "שָׂשׂ אָנֹכִי עַל אִמְרָתֶךָ כְּמוֹצֵא שָׁלָל רָב". השמחה בתורה היא יסוד חשוב ביהדות.`,
+    talmud: `**
+מנהג ההקפות בשמחת תורה מוזכר בפוסקים.
+השולחן ערוך (אורח חיים, סימן תרס"ט, סעיף א') כותב: "נוהגין להקיף הבימה עם ספר תורה, פעם אחת בערב ופעם אחת ביום, ויש מקיפין שלש פעמים, ויש מקיפין שבע פעמים, וכל מקום לפי מנהגו."
+הרמ"א מוסיף שם: "ונוהגין לומר מזמורים ותפלות מיוחדות לזה, וכל מקום לפי מנהגו. ונוהגין עוד להוציא כל ספרי התורה שבהיכל ולומר עמהם 'אתה הראת'".
+
+המשנה ברורה (שם, ס"ק ג') מפרט: "ויש מקיפין שבע פעמים - והוא המנהג הפשוט עתה ברוב המקומות, וכן הוא על פי הקבלה [מהאר"י ז"ל], וכן נוהגין במדינותינו. וטוב להקיף שבע הקפות שלמות, דהיינו שיקיפו שבע פעמים את הבימה, ובכל הקפה יאמרו פיוט אחד מהפיוטים שנתייסדו לזה".
+כלומר, אף שהיו מנהגים שונים בעבר, המנהג שהתקבל והתפשט ברוב קהילות ישראל, במיוחד על פי תורת הקבלה והאר"י הקדוש, הוא לערוך שבע הקפות מלאות, הן בליל שמחת תורה והן ביום.`, 
+    summary: `**
+המנהג המקובל והנפוץ ברוב קהילות ישראל הוא לערוך **שבע הקפות** עם ספרי התורה סביב הבימה, הן בליל שמחת תורה והן ביום שמחת תורה. מנהג זה מבוסס על דברי הפוסקים המאוחרים ועל פי תורת הקבלה. עם זאת, העיקר הוא השמחה הגדולה עם התורה הקדושה, וכל המוסיף בשמחה זו הרי זה משובח.
+
+שנזכה לשמוח תמיד בשמחת התורה!`,
+    web: `**
+המנהג לערוך שבע הקפות הוא הרווח והמקובל כיום ברוב ככל הקהילות בישראל ובתפוצות. כך נוהגים הן בקהילות האשכנזיות והן בקהילות הספרדיות ועדות המזרח. אתרים רבים העוסקים בהלכה ומנהג (כגון אתר "הידברות", "דעת", "חב"ד" ועוד) מציינים את מנהג שבע ההקפות כמנהג המרכזי. יש הנוהגים להוסיף הקפות נוספות לאחר שבע ההקפות הרשמיות, כביטוי נוסף לשמחה הגדולה.
+בנוסף להקפות הנערכות בליל שמחת תורה וביומו בבית הכנסת, התפשט גם המנהג של "הקפות שניות" הנערכות במוצאי שמחת תורה (בחוץ לארץ במוצאי שמיני עצרת שהוא גם שמחת תורה), כהמשך לשמחת החג.`,
+  };
+
   // Handle form submission
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    
+    if (isSubmissionDisabledByTour) return; // Disable submission if tour step requires it
     
     if (!question.trim()) return;
 
@@ -291,7 +316,7 @@ export default function Home() {
     if (e.key === 'Enter') {
       if (e.ctrlKey) {
         e.preventDefault();
-        if (formRef.current && question.trim() && !isLoading) {
+        if (formRef.current && question.trim() && !isLoading && !isSubmissionDisabledByTour) {
           formRef.current.requestSubmit();
         }
       } else if (e.shiftKey) {
@@ -337,7 +362,20 @@ export default function Home() {
   return (
     <RouteGuard>
       <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] dark:bg-[var(--background)] dark:text-[var(--foreground)] flex flex-col">
-        {showOnboarding && <OnboardingTour onComplete={() => setShowOnboarding(false)} />}
+        {showOnboarding && 
+          <OnboardingTour 
+            onComplete={() => {
+              setShowOnboarding(false);
+              setCurrentTourStepId(null); 
+              setElementToElevateForTour(null); // Reset elevated element
+              setIsSubmissionDisabledByTour(false); // Reset submission disable
+            }}
+            onStepChange={(status) => { // Updated handler
+              setCurrentTourStepId(status.stepId);
+              setElementToElevateForTour(status.specialVisibility || null);
+              setIsSubmissionDisabledByTour(status.stepId === 'view_answer');
+            }}
+          />}
         {/* Header */}
         <header className="p-4 bg-[var(--primary)] text-[var(--background)]">
           <div className="container mx-auto flex justify-between items-center">
@@ -363,6 +401,7 @@ export default function Home() {
 
                   {/* History Button */}
                   <button
+                    id="history-button"
                     onClick={() => router.push("/history")}
                     className="px-2.5 py-1 bg-slate-200 text-[var(--primary)] rounded-md hover:bg-slate-300/80 transition-colors font-medium text-xs shadow-sm"
                   >
@@ -403,6 +442,7 @@ export default function Home() {
             <form ref={formRef} onSubmit={handleSubmit} className="mb-8 mt-4">
               <div className="relative mb-4">
                 <textarea
+                  id="question-input-area"
                   onKeyDown={handleKeyDown}
                   className={`w-full p-4 pb-4 rounded-lg border-2 
                     ${pendingQuestion ? 'border-amber-300 bg-amber-50' : 'border-[var(--primary)] bg-[var(--input-background)]'} 
@@ -463,61 +503,77 @@ export default function Home() {
           )}
           
           {/* Answer Display */}
-          {!isLoading && answer && (
-            <div className="bg-[#FCF9F0] rounded-lg p-6 mb-8 border-2 border-[var(--secondary)]">
-              <div className="relative mb-4 p-3 bg-[#F0EADF] rounded">
-                <h3 className="text-lg font-bold mb-2">השאלה שלך:</h3>
-                <p>{answer.questionAsked}</p>
-                <button 
-                  onClick={handleShare}
-                  className="absolute top-3 left-3 px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors text-xs"
-                  title="העתק שאלה ותשובה ללוח"
+          {(() => {
+            const displayAnswer = showOnboarding && currentTourStepId === 'view_answer' 
+              ? defaultAnswerForTour 
+              : answer;
+
+            if (!isLoading && displayAnswer) {
+              return (
+                <div 
+                  id="answer-display-section" 
+                  className="bg-[#FCF9F0] rounded-lg p-6 mb-8 border-2 border-[var(--secondary)]"
+                  style={elementToElevateForTour === '#answer-display-section' ? { zIndex: 10010, position: 'relative' } : {}}
                 >
-                  שתף
-                </button>
-                {showShareConfirmation && (
-                  <div className="absolute top-3 left-16 mt-1 px-2 py-0.5 bg-green-500 text-white rounded text-xs">
-                    הועתק!
+                  <div className="relative mb-4 p-3 bg-[#F0EADF] rounded">
+                    <h3 className="text-lg font-bold mb-2">השאלה שלך:</h3>
+                    <p>{displayAnswer.questionAsked}</p>
+                    {/* Hide share button during tour example, or make it non-functional */}
+                    {!(showOnboarding && currentTourStepId === 'view_answer') && (
+                      <button 
+                        onClick={handleShare}
+                        className="absolute top-3 left-3 px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors text-xs"
+                        title="העתק שאלה ותשובה ללוח"
+                      >
+                        שתף
+                      </button>
+                    )}
+                    {showShareConfirmation && (
+                      <div className="absolute top-3 left-16 mt-1 px-2 py-0.5 bg-green-500 text-white rounded text-xs">
+                        הועתק!
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-              
-              <div className="space-y-6">
-                {/* Tanakh Answer - Always shown */}
-                <div className="border-r-4 border-[#0d3677] pr-4">
-                  <h3 className="text-xl font-bold mb-2 text-[#0d3677]">מהתנ&quot;ך</h3>
-                  <p className="leading-relaxed text-gray-700 whitespace-pre-wrap"><Linkify text={answer.tanakh || ""}/></p>
+                  
+                  <div className="space-y-6">
+                    {/* Tanakh Answer - Always shown */}
+                    <div className="border-r-4 border-[#0d3677] pr-4">
+                      <h3 className="text-xl font-bold mb-2 text-[#0d3677]">מהתנ&quot;ך</h3>
+                      <p className="leading-relaxed text-gray-700 whitespace-pre-wrap"><Linkify text={displayAnswer.tanakh || ""}/></p>
+                    </div>
+                    
+                    {/* Talmud Answer - Conditional based on existence in response */}
+                    {displayAnswer.talmud && (
+                      <div className="border-r-4 border-[#7a5901] pr-4">
+                        <h3 className="text-xl font-bold mb-2 text-[#7a5901]">מהתלמוד וההלכה</h3>
+                        <p className="leading-relaxed text-gray-700 whitespace-pre-wrap"><Linkify text={displayAnswer.talmud || ""}/></p>
+                      </div>
+                    )}
+                    
+                    {/* Web Answer - Conditional based on existence in response */}
+                    {displayAnswer.web && (
+                      <div className="border-r-4 border-[#2a6b31] pr-4">
+                        <h3 className="text-xl font-bold mb-2 text-[#2a6b31]">ממקורות מודרניים</h3>
+                        <p className="leading-relaxed text-gray-700 whitespace-pre-wrap"><Linkify text={displayAnswer.web || ""}/></p> 
+                      </div>
+                    )}
+                    
+                    {/* Summary Answer - Conditional based on existence in response */}
+                    {displayAnswer.summary && (
+                      <div className="border-r-4 border-gray-500 pr-4 mt-6 pt-4 border-t border-gray-200">
+                        <h3 className="text-xl font-bold mb-2 text-gray-700">לסיכום</h3>
+                        <p className="leading-relaxed text-gray-700 whitespace-pre-wrap"><Linkify text={displayAnswer.summary || ""}/></p>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                
-                {/* Talmud Answer - Conditional based on existence in response */}
-                {answer.talmud && (
-                  <div className="border-r-4 border-[#7a5901] pr-4">
-                    <h3 className="text-xl font-bold mb-2 text-[#7a5901]">מהתלמוד וההלכה</h3>
-                    <p className="leading-relaxed text-gray-700 whitespace-pre-wrap"><Linkify text={answer.talmud || ""}/></p>
-                  </div>
-                )}
-                
-                {/* Web Answer - Conditional based on existence in response */}
-                {answer.web && (
-                  <div className="border-r-4 border-[#2a6b31] pr-4">
-                    <h3 className="text-xl font-bold mb-2 text-[#2a6b31]">ממקורות מודרניים</h3>
-                    <p className="leading-relaxed text-gray-700 whitespace-pre-wrap"><Linkify text={answer.web || ""}/></p>
-                  </div>
-                )}
-                
-                {/* Summary Answer - Conditional based on existence in response */}
-                {answer.summary && (
-                  <div className="border-r-4 border-gray-500 pr-4 mt-6 pt-4 border-t border-gray-200">
-                    <h3 className="text-xl font-bold mb-2 text-gray-700">לסיכום</h3>
-                    <p className="leading-relaxed text-gray-700 whitespace-pre-wrap"><Linkify text={answer.summary || ""}/></p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+              );
+            }
+            return null;
+          })()}
           
-          {/* Initial Placeholder for Answer Area (only if not loading, no answer, no error, no pending question shown as notice) */}
-          {!isLoading && !answer && !error && !(pendingQuestion && !answer) && (
+          {/* Initial Placeholder for Answer Area (only if not loading, no answer, no error, no pending question shown as notice, AND not showing tour answer) */}
+          {!isLoading && !answer && !(showOnboarding && currentTourStepId === 'view_answer') && !error && !(pendingQuestion && !answer) && (
             <div className="text-center py-10 text-[var(--foreground)] text-opacity-60">
               <p className="text-lg">התשובות לשאלותיך יופיעו כאן</p>
             </div>
