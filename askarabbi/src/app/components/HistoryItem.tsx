@@ -35,7 +35,7 @@ const HistoryItem: React.FC<HistoryItemProps> = ({ item, onDeleteClick }) => {
     if (item.answer.web) answerParts.push(`ממקורות מודרניים:\n${item.answer.web}`);
     if (item.answer.summary) answerParts.push(`לסיכום:\n${item.answer.summary}`);
 
-    const shareText = `שאלה: ${item.question}\n\nתשובה:\n${answerParts.join('\n\n')}`;
+    const shareText = `שאלה: ${item.question}\n\nתשובה:\n${answerParts.join('\n\n')}\n\n---\nנשלח מאתר שאלת'רב: https://askarabbi.online`;
 
     const isMobile = /Mobi/i.test(navigator.userAgent);
 

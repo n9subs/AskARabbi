@@ -329,7 +329,7 @@ export default function Home() {
 
   const handleShare = async () => {
     if (answer) {
-      const shareText = `שאלה: ${answer.questionAsked}\n\nתשובה:\n${answer.tanakh || ''}${answer.talmud ? `\n\nמהתלמוד וההלכה:\n${answer.talmud}` : ''}${answer.web ? `\n\nממקורות מודרניים:\n${answer.web}` : ''}${answer.summary ? `\n\nלסיכום:\n${answer.summary}` : ''}`;
+      const shareText = `שאלה: ${answer.questionAsked}\n\nתשובה:\n${answer.tanakh || ''}${answer.talmud ? `\n\nמהתלמוד וההלכה:\n${answer.talmud}` : ''}${answer.web ? `\n\nממקורות מודרניים:\n${answer.web}` : ''}${answer.summary ? `\n\nלסיכום:\n${answer.summary}` : ''}\n\n---\nנשלח מאתר שאלת'רב: https://askarabbi.online`;
 
       const isMobile = /Mobi/i.test(navigator.userAgent);
 
