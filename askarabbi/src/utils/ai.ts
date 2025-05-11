@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI, Part, FunctionCallingMode } from '@google/generative-ai';
+import { GoogleGenerativeAI, Part, FunctionCallingMode, GenerateContentResult } from '@google/generative-ai';
 
 // Define the structure for the response - this can remain the same
 interface StructuredAnswer {
@@ -84,8 +84,10 @@ export async function queryAIAPI(question: string): Promise<StructuredAnswer> {
     },
   ];
 
+  const TIMEOUT_MS = 300000; // 5 minutes
+
   try {
-    const result = await modelInstance.generateContent({
+    const aiOperation: Promise<GenerateContentResult> = modelInstance.generateContent({
       contents: requestContents,
       toolConfig: {
         functionCallingConfig: {
@@ -93,6 +95,24 @@ export async function queryAIAPI(question: string): Promise<StructuredAnswer> {
         }
       }
     });
+
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error("AI_TIMEOUT")), TIMEOUT_MS)
+    );
+
+    // Race the AI operation against the timeout
+    const result = await Promise.race([
+      aiOperation,
+      timeoutPromise
+    ]) as GenerateContentResult; // Type assertion
+
+    if (!result || !result.response) {
+        // This case might happen if timeoutPromise won due to an issue where aiOperation resolved with undefined/nullish value first
+        // or if the AI operation genuinely returned no response structure.
+        console.error("AI operation completed but returned no valid response structure before timeout or due to an issue.");
+        throw new Error("AI operation returned no response.");
+    }
+
     const response = result.response;
     const rawContent = response.text();
     

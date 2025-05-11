@@ -63,6 +63,28 @@ export const incrementQuestionCount = internalMutation({
     },
 });
 
+// Internal mutation to decrement count atomically (e.g., on error/timeout)
+export const decrementQuestionCount = internalMutation({
+    args: { userId: v.id("users") },
+    handler: async (ctx, args) => {
+        const user = await ctx.db.get(args.userId);
+        if (!user) return;
+
+        const now = Date.now();
+        const todayStart = new Date(now).setHours(0, 0, 0, 0);
+        const lastDateStart = user.lastQuestionDate ? new Date(user.lastQuestionDate).setHours(0, 0, 0, 0) : 0;
+
+        const currentCount = user.dailyQuestionCount ?? 0;
+        // Only decrement if the last question was today and count > 0
+        if (lastDateStart === todayStart && currentCount > 0) {
+            await ctx.db.patch(args.userId, {
+                dailyQuestionCount: currentCount - 1,
+                // We don't change lastQuestionDate here, as a question was still attempted
+            });
+        }
+    },
+});
+
 // Set pending question for a user
 export const setPendingQuestion = mutation({
     args: { 

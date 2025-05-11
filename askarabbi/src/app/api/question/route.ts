@@ -3,8 +3,22 @@ import { queryAIAPI } from '@/utils/ai';
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../convex/_generated/api";
 import { Id } from "../../../../convex/_generated/dataModel"; // Import Id if needed for casting
+import { PostHog } from 'posthog-node'; // Added PostHog import
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+
+// Initialize PostHog Client
+// Ensure POSTHOG_API_KEY and POSTHOG_HOST are set in your environment variables
+let posthog: PostHog | undefined;
+if (process.env.POSTHOG_API_KEY && process.env.POSTHOG_HOST) {
+  posthog = new PostHog(process.env.POSTHOG_API_KEY, {
+    host: process.env.POSTHOG_HOST,
+    flushAt: 1, // Send events immediately for serverless environments
+    flushInterval: 0 // Disable interval flushing
+  });
+} else {
+  console.warn('PostHog API Key or Host not configured. Server-side event tracking will be disabled.');
+}
 
 const MIN_QUESTION_LENGTH = 10;
 const MAX_QUESTION_LENGTH = 10000; // Example max length
@@ -88,9 +102,65 @@ export async function POST(request: NextRequest) {
             summary: aiAnswer.summary,
           },
         });
+
+        // PostHog event for successful answer
+        if (posthog) {
+          posthog.capture({
+            distinctId: userId as string, // Ensure distinctId is a string
+            event: 'AI Answer Successful',
+            properties: {
+              questionId: historyId.toString(), // Convert Id to string if necessary
+              questionText: trimmedQuestion,
+              // Add any other relevant properties
+            }
+          });
+          await posthog.shutdown(); // Ensure events are flushed
+        }
+
       })
-      .catch((error) => {
-        console.error('Error processing AI answer:', error);
+      .catch(async (error) => {
+        console.error('Error processing AI answer or AI timed out:', error);
+        let errorType: "failed" | "timed_out" = "failed";
+        let clientErrorMessage = "אירעה שגיאה בעיבוד התשובה.";
+        const originalErrorMessage = error instanceof Error ? error.message : String(error);
+
+        if (error instanceof Error && error.message === "AI_TIMEOUT") {
+          errorType = "timed_out";
+          clientErrorMessage = "הפעולה לקחה יותר מדי זמן והופסקה.";
+          console.warn(`AI Query for questionId ${historyId} timed out.`);
+        } else {
+          console.error(`AI Query for questionId ${historyId} failed:`, originalErrorMessage);
+        }
+
+        // PostHog event for failed answer
+        if (posthog) {
+          posthog.capture({
+            distinctId: userId as string,
+            event: 'AI Answer Failed',
+            properties: {
+              questionId: historyId.toString(),
+              questionText: trimmedQuestion,
+              errorType: errorType,
+              errorMessage: originalErrorMessage, // Log the original error message
+              // Add any other relevant properties
+            }
+          });
+          await posthog.shutdown(); // Ensure events are flushed
+        }
+
+        // Call the new Convex mutation to handle the error, refund credit, and set status
+        try {
+          await convex.mutation(api.history.handleQuestionError, {
+            historyId: historyId,
+            userId: userId as Id<"users">,
+            errorType: errorType,
+            errorMessage: clientErrorMessage // Pass a user-facing message
+          });
+        } catch (convexError) {
+          console.error("Failed to call handleQuestionError mutation:", convexError);
+          // If this fails, the user might not get their credit back, and pending status might remain.
+          // This is a secondary error, the primary AI error is already logged.
+        }
       });
 
     // Return success immediately with pending status

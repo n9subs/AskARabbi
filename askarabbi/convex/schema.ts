@@ -30,5 +30,11 @@ export default defineSchema({
       summary: v.optional(v.string()),
     }),
     timestamp: v.number(),
+    status: v.optional(v.union(
+      v.literal("pending"),
+      v.literal("answered"),
+      v.literal("timed_out"),
+      v.literal("failed")
+    )),
   }).index("by_user", ["userId"]),
 }); 
