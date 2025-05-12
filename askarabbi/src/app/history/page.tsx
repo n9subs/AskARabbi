@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Image from "next/image";
 import logo from "../../../public/logo.png";
 import { useRouter } from 'next/navigation';
@@ -13,6 +13,8 @@ import ConfirmationModal from '../components/ConfirmationModal';
 import HistoryItem from '../components/HistoryItem';
 import { usePostHog } from 'posthog-js/react';
 
+const ITEMS_PER_PAGE = 5; // Or any other number you prefer
+
 export default function HistoryPage() {
   const router = useRouter();
   const { userId, isLoading: authLoading, signOut, userName, isAnonymousUser } = useAuth();
@@ -21,6 +23,8 @@ export default function HistoryPage() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<Id<"history"> | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const observer = useRef<IntersectionObserver | null>(null);
 
   const userHistory = useQuery(
     api.history.list,
@@ -68,6 +72,34 @@ export default function HistoryPage() {
       setItemToDelete(null);
     }
   };
+
+  const paginatedHistory = userHistory
+    ? userHistory.slice(0, currentPage * ITEMS_PER_PAGE)
+    : [];
+
+  const totalPages = userHistory ? Math.ceil(userHistory.length / ITEMS_PER_PAGE) : 0;
+
+  const loadMoreItems = useCallback(() => {
+    if (currentPage < totalPages) {
+      setCurrentPage((prev) => prev + 1);
+      if (posthog) {
+        posthog.capture('history_scrolled_to_load_more', { newPageIndex: currentPage + 1 });
+      }
+    }
+  }, [currentPage, totalPages, posthog]);
+
+  const lastItemRef = useCallback((node: HTMLDivElement | null) => {
+    if (authLoading || !userHistory || userHistory.length === 0) return;
+    if (observer.current) observer.current.disconnect();
+
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && currentPage < totalPages) {
+        loadMoreItems();
+      }
+    });
+
+    if (node) observer.current.observe(node);
+  }, [authLoading, loadMoreItems, currentPage, totalPages, userHistory]);
 
   if (authLoading) {
     return (
@@ -140,13 +172,30 @@ export default function HistoryPage() {
 
           {userHistory && userHistory.length > 0 && (
             <div className="space-y-4">
-              {userHistory.map((item) => (
-                <HistoryItem
-                  key={item._id}
-                  item={item}
-                  onDeleteClick={handleDeleteClick}
-                />
-              ))}
+              {paginatedHistory.map((item, index) => {
+                if (index === paginatedHistory.length - 1) {
+                  return (
+                    <div ref={lastItemRef} key={item._id}>
+                      <HistoryItem
+                        item={item}
+                        onDeleteClick={handleDeleteClick}
+                      />
+                    </div>
+                  );
+                }
+                return (
+                  <HistoryItem
+                    key={item._id}
+                    item={item}
+                    onDeleteClick={handleDeleteClick}
+                  />
+                );
+              })}
+              {currentPage < totalPages && userHistory && userHistory.length > 0 && (
+                <div className="text-center py-5">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[var(--primary)] mx-auto"></div>
+                </div>
+              )}
             </div>
           )}
         </main>

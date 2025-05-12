@@ -639,8 +639,8 @@ export default function QualifiedPage() {
                           >
                             <p className="font-medium flex-grow dir-rtl">{q}</p>
                             <span 
-                              className="text-lg ml-2 transform transition-transform duration-200 border-2 border-red-500 px-1"
-                              style={{ color: 'red' }} 
+                              className="text-lg ml-2 transform transition-transform duration-200 px-1"
+                              style={{ color: 'red' }}
                             >
                               {openStates[uniqueKey] ? '▼' : '▶'}
                             </span>
