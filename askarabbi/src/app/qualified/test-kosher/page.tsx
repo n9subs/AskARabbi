@@ -584,7 +584,6 @@ export default function QualifiedPage() {
           </div>
         </div>
       </header>
-
       <main className="flex-1 container mx-auto p-4 max-w-3xl">
         {/* New section for test details */}
         <div className="mb-6 text-center text-sm text-[var(--foreground)] dir-rtl">
@@ -698,7 +697,6 @@ export default function QualifiedPage() {
           ))}
         </div> {/* End of main scroll-texture div */}
       </main>
-
       <footer className="p-4 bg-[var(--primary-muted)] text-center mt-8">
         <Image src={logo} alt="AskARabbi Logo" className="h-10 mx-auto" width={40} height={40} />
         <p className="text-xs text-[var(--primary-foreground)] opacity-75 mt-1">

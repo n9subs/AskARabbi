@@ -14,11 +14,9 @@ interface TestCardProps {
 
 const TestCard: React.FC<TestCardProps> = ({ title, description, link }) => {
   return (
-    <Link href={link} legacyBehavior>
-      <a className="block p-6 bg-[var(--card)] dark:bg-[var(--card-dark)] rounded-lg shadow-md hover:shadow-lg transition-shadow transform hover:-translate-y-1 dir-rtl">
-        <h2 className="text-xl font-semibold mb-2 text-[var(--primary)]">{title}</h2>
-        <p className="text-sm text-[var(--foreground)]">{description}</p>
-      </a>
+    <Link href={link} className="block p-6 bg-[var(--card)] dark:bg-[var(--card-dark)] rounded-lg shadow-md hover:shadow-lg transition-shadow transform hover:-translate-y-1 dir-rtl">
+      <h2 className="text-xl font-semibold mb-2 text-[var(--primary)]">{title}</h2>
+      <p className="text-sm text-[var(--foreground)]">{description}</p>
     </Link>
   );
 };

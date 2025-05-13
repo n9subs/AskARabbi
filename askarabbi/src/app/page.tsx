@@ -417,7 +417,7 @@ export default function Home() {
                   </button>
                 </div>
               ) : (
-                <div className="h-[28px] w-[1px]">&nbsp;</div> /* Minimal placeholder for alignment consistency */
+                (<div className="h-[28px] w-[1px]">&nbsp;</div>) /* Minimal placeholder for alignment consistency */
               )}
             </div>
           </div>
@@ -620,7 +620,6 @@ export default function Home() {
           <Image src={logo} alt="AskARabbi Logo" className="h-10 mx-auto mt-2" width={40} height={40} />
         </footer>
       </div>
-
       {/* Disclaimer Popup */}
       {showDisclaimerPopup && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">

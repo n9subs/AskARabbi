@@ -612,7 +612,6 @@ export default function TestNidaPage() {
           </div>
         </div>
       </header>
-
       <main className="flex-1 container mx-auto p-4 max-w-3xl">
         <div className="mb-6 text-center text-sm text-[var(--foreground)] dir-rtl">
           <p className="font-semibold text-md">מבחן הסמכה רשמי לשנת תשס&quot;ט</p>
@@ -656,42 +655,40 @@ export default function TestNidaPage() {
                 }
 
                 return (
-                <div 
-                  key={itemKey} 
-                  className="p-3 rounded-lg mb-3" // Reduced padding/margin
-                >
                   <div 
-                    className={`cursor-pointer ${qa.questions.length === 0 ? 'group' : ''}`} 
-                    onClick={() => {
-                        if (qa.questions.length === 0) {
-                            toggleAnswer(mainQuestionToggleKey);
-                        }
-                    }}
+                    key={itemKey} 
+                    className="p-3 rounded-lg mb-3" // Reduced padding/margin
                   >
-                    <h3 
-                      className="text-lg font-semibold mb-1 text-right text-[var(--primary)] border-b-2 border-[var(--primary-muted)] pb-2 dir-rtl flex justify-between items-center"
+                    <div 
+                      className={`cursor-pointer ${qa.questions.length === 0 ? 'group' : ''}`} 
+                      onClick={() => {
+                          if (qa.questions.length === 0) {
+                              toggleAnswer(mainQuestionToggleKey);
+                          }
+                      }}
                     >
-                      <span dangerouslySetInnerHTML={{ __html: `${qa.questionNumber}) ${qa.questionHeader}`.replace(/`(.*?)`/g, '<code class="bg-gray-200 dark:bg-gray-700 px-1 rounded text-sm">$1</code>') }} />
-                      {qa.questions.length === 0 && (
-                         <span 
-                           className="text-lg ml-2 transform transition-transform duration-200 text-red-500"
-                         >
-                           {isMainQuestionOpen ? '▼' : '▶'}
-                         </span>
+                      <h3 
+                        className="text-lg font-semibold mb-1 text-right text-[var(--primary)] border-b-2 border-[var(--primary-muted)] pb-2 dir-rtl flex justify-between items-center"
+                      >
+                        <span dangerouslySetInnerHTML={{ __html: `${qa.questionNumber}) ${qa.questionHeader}`.replace(/`(.*?)`/g, '<code class="bg-gray-200 dark:bg-gray-700 px-1 rounded text-sm">$1</code>') }} />
+                        {qa.questions.length === 0 && (
+                           <span 
+                             className="text-lg ml-2 transform transition-transform duration-200 text-red-500"
+                           >
+                             {isMainQuestionOpen ? '▼' : '▶'}
+                           </span>
+                        )}
+                      </h3>
+                      {qa.questionBodyLines.length > 0 && (
+                         <div className="text-sm text-right my-1 text-[var(--foreground)] dir-rtl pl-4 mb-2">
+                           {qa.questionBodyLines.map((bodyLine, bIdx) => (
+                             <p key={`qbody-${index}-${bIdx}`}>{bodyLine}</p>
+                           ))}
+                         </div>
                       )}
-                    </h3>
-                    {qa.questionBodyLines.length > 0 && (
-                       <div className="text-sm text-right my-1 text-[var(--foreground)] dir-rtl pl-4 mb-2">
-                         {qa.questionBodyLines.map((bodyLine, bIdx) => (
-                           <p key={`qbody-${index}-${bIdx}`}>{bodyLine}</p>
-                         ))}
-                       </div>
-                    )}
-                  </div>
-
-                  {qa.questions.length === 0 ? ( // Main question, potentially with answer
-                    mainAnswerData ? (
-                      <div 
+                    </div>
+                    {qa.questions.length === 0 ? ( // Main question, potentially with answer
+                      (mainAnswerData ? (<div 
                         className={`transition-all duration-300 ease-in-out overflow-hidden ${isMainQuestionOpen ? 'max-h-[1000px] opacity-100 mt-2' : 'max-h-0 opacity-0'}`} // Tailwind transition
                       >
                         <div className="mt-2 ml-4 pl-4 pr-2 pb-2 border-l-2 border-blue-500 py-2">
@@ -714,9 +711,7 @@ export default function TestNidaPage() {
                             )}
                           </div>
                         </div>
-                      </div>
-                    ) : (
-                      <div 
+                      </div>) : (<div 
                         className={`transition-all duration-300 ease-in-out overflow-hidden ${isMainQuestionOpen ? 'max-h-[1000px] opacity-100 mt-2' : 'max-h-0 opacity-0'}`} // Tailwind transition
                       >
                         <div 
@@ -725,76 +720,74 @@ export default function TestNidaPage() {
                         >
                           (עדיין אין תשובה זמינה עבור שאלה זו)
                         </div>
-                      </div>
-                    )
-                  ) : ( // Question with sub-questions
-                    <div className="space-y-2 pl-4 text-right dir-rtl mt-2">
-                      {qa.questions.map((q, qIndex) => {
-                        const subQuestionUniqueKey = `ans-${qa.questionNumber}-${qIndex}`;
-                        const answerData = answersMap[answerMapKey]?.subAnswers[qIndex];
-                        
-                        return (
-                          <div 
-                            key={`q-${index}-${qIndex}`} 
-                            className="text-sm text-[var(--foreground)] mb-2 p-1 border-b border-gray-300 dark:border-gray-700"
-                          >
+                      </div>))
+                    ) : ( // Question with sub-questions
+                      (<div className="space-y-2 pl-4 text-right dir-rtl mt-2">
+                        {qa.questions.map((q, qIndex) => {
+                          const subQuestionUniqueKey = `ans-${qa.questionNumber}-${qIndex}`;
+                          const answerData = answersMap[answerMapKey]?.subAnswers[qIndex];
+                          
+                          return (
                             <div 
-                              className="flex justify-between items-center cursor-pointer py-2 pr-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                              onClick={() => toggleAnswer(subQuestionUniqueKey)}
+                              key={`q-${index}-${qIndex}`} 
+                              className="text-sm text-[var(--foreground)] mb-2 p-1 border-b border-gray-300 dark:border-gray-700"
                             >
-                              <p className="font-medium flex-grow dir-rtl">{q}</p>
-                              <span 
-                                className="text-lg ml-2 transform transition-transform duration-200 text-red-500"
-                              >
-                                {openStates[subQuestionUniqueKey] ? '▼' : '▶'}
-                              </span>
-                            </div>
-                            {openStates[subQuestionUniqueKey] && (
                               <div 
-                                className="answer-container mt-2 ml-4 pl-4 pr-2 pb-2 border-l-2 border-blue-500 py-2"
+                                className="flex justify-between items-center cursor-pointer py-2 pr-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                                onClick={() => toggleAnswer(subQuestionUniqueKey)}
                               >
-                                {answerData ? (
-                                  <div style={{ backgroundColor: 'lightyellow', padding: '10px', border: '1px solid orange' }}>
-                                    {answerData.paragraphs.map((p: string, pIdx: number) => (
-                                      <p 
-                                        key={`ans-p-${index}-${qIndex}-${pIdx}`} 
-                                        className="text-lg mb-1 dir-rtl"
-                                        style={{ color: 'black' }}
-                                        dangerouslySetInnerHTML={{ __html: p.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\\n|\n/g, '<br />') }} 
-                                      />
-                                    ))}
-                                    {answerData.sources && (
-                                      <p 
-                                        className="text-sm italic mt-3 dir-rtl"
-                                        style={{ color: '#555' }}
-                                      >
-                                        <strong>מקורות עיקריים:</strong> <span dangerouslySetInnerHTML={{ __html: answerData.sources.replace(/\\n|\n/g, '<br />') }} />
-                                      </p>
-                                    )}
-                                  </div>
-                                ) : (
-                                  <div 
-                                    className="text-xs italic dir-rtl p-2 bg-gray-100 dark:bg-gray-800 rounded"
-                                    style={{ color: 'red' }}
-                                  >
-                                    (עדיין אין תשובה זמינה עבור שאלה זו)
-                                  </div>
-                                )}
+                                <p className="font-medium flex-grow dir-rtl">{q}</p>
+                                <span 
+                                  className="text-lg ml-2 transform transition-transform duration-200 text-red-500"
+                                >
+                                  {openStates[subQuestionUniqueKey] ? '▼' : '▶'}
+                                </span>
                               </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
+                              {openStates[subQuestionUniqueKey] && (
+                                <div 
+                                  className="answer-container mt-2 ml-4 pl-4 pr-2 pb-2 border-l-2 border-blue-500 py-2"
+                                >
+                                  {answerData ? (
+                                    <div style={{ backgroundColor: 'lightyellow', padding: '10px', border: '1px solid orange' }}>
+                                      {answerData.paragraphs.map((p: string, pIdx: number) => (
+                                        <p 
+                                          key={`ans-p-${index}-${qIndex}-${pIdx}`} 
+                                          className="text-lg mb-1 dir-rtl"
+                                          style={{ color: 'black' }}
+                                          dangerouslySetInnerHTML={{ __html: p.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\\n|\n/g, '<br />') }} 
+                                        />
+                                      ))}
+                                      {answerData.sources && (
+                                        <p 
+                                          className="text-sm italic mt-3 dir-rtl"
+                                          style={{ color: '#555' }}
+                                        >
+                                          <strong>מקורות עיקריים:</strong> <span dangerouslySetInnerHTML={{ __html: answerData.sources.replace(/\\n|\n/g, '<br />') }} />
+                                        </p>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <div 
+                                      className="text-xs italic dir-rtl p-2 bg-gray-100 dark:bg-gray-800 rounded"
+                                      style={{ color: 'red' }}
+                                    >
+                                      (עדיין אין תשובה זמינה עבור שאלה זו)
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>)
+                    )}
+                  </div>
                 );
               })}
             </div>
           )}
             </div>
       </main>
-
       <footer className="p-4 bg-[var(--primary-muted)] text-center mt-8">
         <Image src={logo} alt="AskARabbi Logo" className="h-10 mx-auto" width={40} height={40} />
         <p className="text-xs text-[var(--primary-foreground)] opacity-75 mt-1">
