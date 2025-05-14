@@ -8,25 +8,53 @@ interface StructuredAnswer {
   summary?: string;
 }
 
-// Instantiate the Google GenAI client
-let genAI: GoogleGenerativeAI;
-const apiKey = process.env.GEMINI_API_KEY;
+// API Key Management
+let apiKeys: string[] = [];
+let currentApiKeyIndex = 0;
 
-if (apiKey) {
-  try {
-    genAI = new GoogleGenerativeAI(apiKey);
-  } catch (e) {
-    console.error("Failed to instantiate GoogleGenAI client. Ensure GEMINI_API_KEY is valid.", e);
-    if (e instanceof Error) {
-      throw new Error(`Failed to instantiate GoogleGenAI client: ${e.message}`);
-    } else {
-      throw new Error("Failed to instantiate GoogleGenAI client due to an unknown error.");
-    }
-  }
-} else {
-  console.error("GEMINI_API_KEY is not set.");
-  throw new Error("GEMINI_API_KEY is not set in environment variables.");
+const apiKeyString = process.env.GEMINI_API_KEYS; // Changed from GEMINI_API_KEY
+
+if (apiKeyString) {
+  apiKeys = apiKeyString.split(',').map(key => key.trim()).filter(key => key.length > 0);
 }
+
+if (apiKeys.length === 0) {
+  console.error("GEMINI_API_KEYS is not set or contains no valid keys. Please provide a comma-separated list of API keys.");
+  throw new Error("GEMINI_API_KEYS is not set or contains no valid keys in environment variables.");
+}
+
+// Function to get the next API key in a round-robin fashion
+function getNextApiKey(): string {
+  if (apiKeys.length === 0) {
+    throw new Error("No API keys available.");
+  }
+  const key = apiKeys[currentApiKeyIndex];
+  currentApiKeyIndex = (currentApiKeyIndex + 1) % apiKeys.length;
+  return key;
+}
+
+// Instantiate the Google GenAI client - will be done per request now
+let genAI: GoogleGenerativeAI;
+// const apiKey = process.env.GEMINI_API_KEY; // Removed old single key logic
+
+// if (apiKey) { // Removed old single key logic
+//   try { // Removed old single key logic
+//     genAI = new GoogleGenerativeAI(apiKey); // Removed old single key logic
+//   } catch (e) { // Removed old single key logic
+//     console.error("Failed to instantiate GoogleGenAI client. Ensure GEMINI_API_KEY is valid.", e); // Removed old single key logic
+//     if (e instanceof Error) { // Removed old single key logic
+//       throw new Error(`Failed to instantiate GoogleGenAI client: ${e.message}`); // Removed old single key logic
+//     } else { // Removed old single key logic
+//       throw new Error("Failed to instantiate GoogleGenAI client due to an unknown error."); // Removed old single key logic
+//     } // Removed old single key logic
+//   } // Removed old single key logic
+// } else { // Removed old single key logic
+//   console.error("GEMINI_API_KEY is not set."); // Removed old single key logic
+//   throw new Error("GEMINI_API_KEY is not set in environment variables."); // Removed old single key logic
+// } // Removed old single key logic
+
+const MAX_RETRIES = 3; // Maximum number of retries
+const INITIAL_BACKOFF_MS = 2000; // Initial backoff delay in milliseconds
 
 export function getJewishSystemPrompt(): string {
   // Instructions are now hardcoded and stricter
@@ -55,78 +83,121 @@ export function getJewishSystemPrompt(): string {
 }
 
 export async function queryAIAPI(question: string): Promise<StructuredAnswer> {
-  if (!genAI) {
-    console.error("GoogleGenAI client not initialized. Cannot proceed. Ensure GEMINI_API_KEY is set and valid.");
-    throw new Error("GoogleGenAI client failed to initialize. Check GEMINI_API_KEY.");
-  }
+  let lastError: Error | null = null;
 
-  const systemPromptText = getJewishSystemPrompt();
-  console.log('Querying Google GenAI with experimental model and question:', { question });
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    const currentApiKey = getNextApiKey();
+    console.log(`Attempt ${attempt + 1}/${MAX_RETRIES}. Using API key ending with: ...${currentApiKey.slice(-4)}. Total keys available: ${apiKeys.length}`);
 
-  const modelName = 'gemini-2.5-pro-exp-03-25';
-
-  const modelInstance = genAI.getGenerativeModel({
-    model: modelName,
-    systemInstruction: {
-      role: 'system', 
-      parts: [{ text: systemPromptText }],
-    },
-    generationConfig: {
-        responseMimeType: 'text/plain',
-        temperature: 0.1, 
+    try {
+      genAI = new GoogleGenerativeAI(currentApiKey);
+    } catch (e) {
+      console.error(`Failed to instantiate GoogleGenAI client with key ending in ...${currentApiKey.slice(-4)}. Ensure the key is valid.`, e);
+      lastError = e instanceof Error ? e : new Error("Failed to instantiate GoogleGenAI client due to an unknown error.");
+      // If client instantiation fails, we might want to quickly try the next key or handle it differently.
+      // For now, we'll let it proceed to the API call which will likely also fail, or be caught by the outer try-catch.
+      // Consider adding a delay here if instantiation itself is rate-limited, though unlikely.
+      if (attempt < MAX_RETRIES - 1) {
+        const backoffDelay = INITIAL_BACKOFF_MS * Math.pow(2, attempt);
+        console.log(`Client instantiation failed for key ...${currentApiKey.slice(-4)}. Waiting ${backoffDelay}ms before next attempt.`);
+        await new Promise(resolve => setTimeout(resolve, backoffDelay));
+      }
+      continue; // Try next key/attempt
     }
-  });
 
-  const requestContents = [
-    {
-      role: 'user' as const, // Ensure role is of type 'user'
-      parts: [{ text: question } as Part], // Ensure parts are of type Part[]
-    },
-  ];
+    if (!genAI) {
+      console.error("GoogleGenAI client not initialized. This should not happen if API keys are configured.");
+      lastError = new Error("GoogleGenAI client failed to initialize. Check GEMINI_API_KEYS.");
+      // No point in retrying if genAI isn't initializing, likely a config issue with all keys or the core setup.
+      // However, the loop will try next key which might re-initialize genAI correctly.
+      if (attempt < MAX_RETRIES - 1) {
+        const backoffDelay = INITIAL_BACKOFF_MS * Math.pow(2, attempt);
+        console.log(`GenAI client not initialized. Waiting ${backoffDelay}ms before next attempt.`);
+        await new Promise(resolve => setTimeout(resolve, backoffDelay));
+      }
+      continue; // Try next key/attempt
+    }
 
-  const TIMEOUT_MS = 300000; // 5 minutes
+    const systemPromptText = getJewishSystemPrompt();
+    console.log('Querying Google GenAI with experimental model and question:', { question });
 
-  try {
-    const aiOperation: Promise<GenerateContentResult> = modelInstance.generateContent({
-      contents: requestContents,
-      toolConfig: {
-        functionCallingConfig: {
-          mode: FunctionCallingMode.AUTO,
-        }
+    const modelName = 'gemini-2.5-flash-preview-04-17';
+
+    const modelInstance = genAI.getGenerativeModel({
+      model: modelName,
+      systemInstruction: {
+        role: 'system',
+        parts: [{ text: systemPromptText }],
+      },
+      generationConfig: {
+        responseMimeType: 'text/plain',
+        temperature: 0.1,
       }
     });
 
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error("AI_TIMEOUT")), TIMEOUT_MS)
-    );
+    const requestContents = [
+      {
+        role: 'user' as const,
+        parts: [{ text: question } as Part],
+      },
+    ];
 
-    // Race the AI operation against the timeout
-    const result = await Promise.race([
-      aiOperation,
-      timeoutPromise
-    ]) as GenerateContentResult; // Type assertion
+    const TIMEOUT_MS = 300000; // 5 minutes
 
-    if (!result || !result.response) {
-        // This case might happen if timeoutPromise won due to an issue where aiOperation resolved with undefined/nullish value first
-        // or if the AI operation genuinely returned no response structure.
+    try {
+      const aiOperation: Promise<GenerateContentResult> = modelInstance.generateContent({
+        contents: requestContents,
+        toolConfig: {
+          functionCallingConfig: {
+            mode: FunctionCallingMode.AUTO,
+          }
+        }
+      });
+
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("AI_TIMEOUT")), TIMEOUT_MS)
+      );
+
+      const result = await Promise.race([
+        aiOperation,
+        timeoutPromise
+      ]) as GenerateContentResult;
+
+      if (!result || !result.response) {
         console.error("AI operation completed but returned no valid response structure before timeout or due to an issue.");
-        throw new Error("AI operation returned no response.");
-    }
+        throw new Error("AI operation returned no response."); // This will be caught by the outer catch
+      }
 
-    const response = result.response;
-    const rawContent = response.text();
-    
-    console.log("Raw Google GenAI response content:", rawContent);
-    return parseAIResponse(rawContent); 
+      const response = result.response;
+      const rawContent = response.text();
 
-  } catch (error: unknown) {
-    console.error('Error calling Google GenAI SDK:', error);
-    let errorMessage = 'An unknown error occurred during Google GenAI SDK call.';
-    if (error instanceof Error) {
-        errorMessage = error.message;
+      console.log("Raw Google GenAI response content:", rawContent);
+      return parseAIResponse(rawContent);
+
+    } catch (error: unknown) {
+      console.error(`Error on attempt ${attempt + 1}/${MAX_RETRIES} with key ...${currentApiKey.slice(-4)}:`, error);
+      lastError = error instanceof Error ? error : new Error('An unknown error occurred during Google GenAI SDK call.');
+
+      // Check if it's a rate limit error (status 429)
+      // The actual error structure might vary, so this check might need adjustment based on observed errors.
+      // For now, assuming error.message or error.toString() might contain '429' or 'Too Many Requests'.
+      // A more robust check would be to inspect error.status if available.
+      const isRateLimitError = (lastError.message.includes('429') || lastError.message.includes('Too Many Requests'));
+
+      if (isRateLimitError && attempt < MAX_RETRIES - 1) {
+        const backoffDelay = INITIAL_BACKOFF_MS * Math.pow(2, attempt);
+        console.log(`Rate limit hit on attempt ${attempt + 1}. Waiting ${backoffDelay}ms before retrying with next key.`);
+        await new Promise(resolve => setTimeout(resolve, backoffDelay));
+      } else if (!isRateLimitError) {
+        // If it's not a rate limit error, rethrow immediately as it might be a different issue.
+        throw lastError;
+      }
+      // If it is a rate limit error and we've exhausted retries, the loop will terminate and the lastError will be thrown.
     }
-    throw new Error(`Error processing Google GenAI request: ${errorMessage}`);
   }
+  // If loop completes, all retries have failed
+  console.error(`All ${MAX_RETRIES} attempts failed. Last error:`, lastError);
+  throw new Error(`Error processing Google GenAI request after ${MAX_RETRIES} attempts: ${lastError ? lastError.message : 'Unknown error'}`);
 }
 
 // parseAIResponse function remains the same as previously defined.

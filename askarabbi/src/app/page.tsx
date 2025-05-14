@@ -445,15 +445,15 @@ export default function Home() {
                   id="question-input-area"
                   onKeyDown={handleKeyDown}
                   className={`w-full p-4 pb-4 rounded-lg border-2 
-                    ${pendingQuestion ? 'border-amber-300 bg-amber-50' : 'border-[var(--primary)] bg-[var(--input-background)]'} 
+                    ${pendingQuestion || remainingQuestions <= 0 ? 'border-amber-300 bg-amber-50' : 'border-[var(--primary)] bg-[var(--input-background)]'} 
                     text-[var(--foreground)] text-right resize-none h-32 
                     placeholder:text-[var(--input-placeholder-text)] focus:ring-2 focus:ring-[var(--primary)] 
                     focus:ring-opacity-75 outline-none
-                    ${pendingQuestion ? 'opacity-70' : ''}`}
-                  placeholder={pendingQuestion ? "יש לך שאלה ממתינה. אנא המתן לתשובה." : "שָׁאַל שְׁאֵלָה עַל יַהֲדוּת..."}
+                    ${pendingQuestion || remainingQuestions <= 0 ? 'opacity-70' : ''}`}
+                  placeholder={pendingQuestion ? "יש לך שאלה ממתינה. אנא המתן לתשובה." : remainingQuestions <= 0 ? "לא נותרו לך שאלות להיום. נסה שוב מחר." : "שָׁאַל שְׁאֵלָה עַל יַהֲדוּת..."}
                   value={question}
                   onChange={(e) => setQuestion(e.target.value)}
-                  disabled={!!pendingQuestion}
+                  disabled={!!pendingQuestion || remainingQuestions <= 0}
                 />
                 {/* Rate Limit Indicator */}
                 <div className="text-xs text-gray-500 text-left absolute bottom-2 right-3">
@@ -469,9 +469,9 @@ export default function Home() {
               <div className="flex justify-end">
                 <button
                   type="submit"
-                  disabled={isLoading || !question.trim() || !!pendingQuestion || question.trim().length < 10}
+                  disabled={isLoading || !question.trim() || !!pendingQuestion || question.trim().length < 10 || remainingQuestions <= 0}
                   className={`${
-                    isLoading || !question.trim() || !!pendingQuestion || question.trim().length < 10
+                    isLoading || !question.trim() || !!pendingQuestion || question.trim().length < 10 || remainingQuestions <= 0
                       ? "bg-gray-300 cursor-not-allowed"
                       : "bg-[var(--primary)] hover:bg-opacity-90"
                   } px-6 py-2 rounded-md text-white text-lg transition-colors duration-150 ease-in-out font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]`}

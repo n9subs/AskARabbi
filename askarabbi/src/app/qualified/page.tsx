@@ -23,7 +23,7 @@ const TestCard: React.FC<TestCardProps> = ({ title, description, link }) => {
 
 const tests = [
   {
-    title: "מבחן כשרות",
+    title: "מבחן הלכות איסור והיתר",
     description: "מבחן הסמכה בהלכות איסור והיתר, כפי שפורסם ע\"י הרבנות הראשית לישראל.",
     link: "/qualified/test-kosher"
   },
@@ -31,6 +31,11 @@ const tests = [
     title: "מבחן הלכות נידה",
     description: "מבחן הסמכה בהלכות נידה, כפי שפורסם ע\"י הרבנות הראשית לישראל.",
     link: "/qualified/test-nida"
+  },
+  {
+    title: "מבחן הלכות שבת",
+    description: "מבחן הסמכה בהלכות שבת, כפי שפורסם ע\"י הרבנות הראשית לישראל.",
+    link: "/qualified/test-shabat"
   }
   // Add more tests here as needed
 ];
