@@ -23,20 +23,25 @@ const TestCard: React.FC<TestCardProps> = ({ title, description, link }) => {
 
 const tests = [
   {
-    title: "מבחן הלכות איסור והיתר",
-    description: "מבחן הסמכה בהלכות איסור והיתר, כפי שפורסם ע\"י הרבנות הראשית לישראל.",
-    link: "/qualified/test-kosher"
+    title: "מבחן בהלכות נידה",
+    description: "בחן את ידיעותיך בהלכות נידה, כולל מקורות, דינים ופרטי הלכות.",
+    link: "/qualified/test-nida",
   },
   {
-    title: "מבחן הלכות נידה",
-    description: "מבחן הסמכה בהלכות נידה, כפי שפורסם ע\"י הרבנות הראשית לישראל.",
-    link: "/qualified/test-nida"
+    title: "מבחן בהלכות שבת",
+    description: "בחן את ידיעותיך בהלכות שבת, כולל מלאכות, מוקצה, ועירובין.",
+    link: "/qualified/test-shabat",
   },
   {
-    title: "מבחן הלכות שבת",
-    description: "מבחן הסמכה בהלכות שבת, כפי שפורסם ע\"י הרבנות הראשית לישראל.",
-    link: "/qualified/test-shabat"
-  }
+    title: "מבחן בהלכות כשרות",
+    description: "בחן את ידיעותיך בהלכות כשרות, כולל בשר בחלב, תערובות, ומליחה.",
+    link: "/qualified/test-kosher",
+  },
+  {
+    title: "מבחן בהלכות אבלות",
+    description: "בחן את ידיעותיך בהלכות אבלות, כולל דיני קריעה, שבעה, ושלושים.",
+    link: "/qualified/test-avlut",
+  },
   // Add more tests here as needed
 ];
 
