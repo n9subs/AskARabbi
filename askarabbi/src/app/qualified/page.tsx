@@ -24,28 +24,33 @@ const TestCard: React.FC<TestCardProps> = ({ title, description, link }) => {
 const tests = [
   {
     title: "מבחן בהלכות נידה",
-    description: "בחן את ידיעותיך בהלכות נידה, כולל מקורות, דינים ופרטי הלכות.",
+    description: "מבחן בהלכות נידה.",
     link: "/qualified/test-nida",
   },
   {
     title: "מבחן בהלכות שבת",
-    description: "בחן את ידיעותיך בהלכות שבת, כולל מלאכות, מוקצה, ועירובין.",
+    description: "מבחן בהלכות שבת.",
     link: "/qualified/test-shabat",
   },
   {
     title: "מבחן בהלכות אבלות",
-    description: "בחן את ידיעותיך בהלכות אבלות, כולל דיני קריעה, שבעה, ושלושים.",
+    description: "מבחן בהלכות אבלות.",
     link: "/qualified/test-avlut",
   },
   {
     title: "מבחן בהלכות איסור והיתר",
-    description: "בחן את ידיעותיך בהלכות כשרות, בשר בחלב, תערובות ועוד. רמה: הסמכה לרבנות.",
+    description: "מבחן בהלכות איסור והיתר.",
     link: "/qualified/test-kosher",
   },
   {
     title: "מבחן בהלכות חופה וקידושין",
-    description: "בחן את ידיעותיך בהלכות חופה, קידושין, כתובה ועוד. רמה: הסמכה לרבנות.",
+    description: "מבחן בהלכות חופה וקידושין.",
     link: "/qualified/test-hupa",
+  },
+  {
+    title: "מבחן בהלכות ברכות",
+    description: "מבחן בהלכות ברכות ובית הכנסת.",
+    link: "/qualified/test-brachot",
   },
   // Add more tests here as needed
 ];
