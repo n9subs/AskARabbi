@@ -33,14 +33,19 @@ const tests = [
     link: "/qualified/test-shabat",
   },
   {
-    title: "מבחן בהלכות כשרות",
-    description: "בחן את ידיעותיך בהלכות כשרות, כולל בשר בחלב, תערובות, ומליחה.",
-    link: "/qualified/test-kosher",
-  },
-  {
     title: "מבחן בהלכות אבלות",
     description: "בחן את ידיעותיך בהלכות אבלות, כולל דיני קריעה, שבעה, ושלושים.",
     link: "/qualified/test-avlut",
+  },
+  {
+    title: "מבחן בהלכות איסור והיתר",
+    description: "בחן את ידיעותיך בהלכות כשרות, בשר בחלב, תערובות ועוד. רמה: הסמכה לרבנות.",
+    link: "/qualified/test-kosher",
+  },
+  {
+    title: "מבחן בהלכות חופה וקידושין",
+    description: "בחן את ידיעותיך בהלכות חופה, קידושין, כתובה ועוד. רמה: הסמכה לרבנות.",
+    link: "/qualified/test-hupa",
   },
   // Add more tests here as needed
 ];
