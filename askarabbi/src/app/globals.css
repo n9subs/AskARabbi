@@ -60,6 +60,23 @@ body {
   font-family: var(--font-hebrew), Arial, Helvetica, sans-serif;
 }
 
+/* Add responsive font sizes */
+html {
+  @apply text-base; /* Default font size */
+}
+
+@media (max-width: 768px) { /* md breakpoint in Tailwind */
+  html {
+    @apply text-sm; /* Smaller font size for medium screens */
+  }
+}
+
+@media (max-width: 640px) { /* sm breakpoint in Tailwind */
+  html {
+    @apply text-xs; /* Even smaller font size for small screens */
+  }
+}
+
 /* Custom styling for Hebrew text */
 .hebrew {
   font-family: var(--font-hebrew), Arial, Helvetica, sans-serif;

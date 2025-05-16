@@ -392,9 +392,9 @@ export default function Home() {
             </div>
 
             {/* Leftmost (RTL): User Actions - takes minimal space, items packed closely */}
-            <div className="flex-shrink-0">
+            <div className="flex items-center space-x-2 space-x-reverse md:flex-row flex-col md:space-y-0 space-y-2"> {/* Modified: flex-col on small, flex-row on md+ */}
               {userId ? (
-                <div className="flex items-center space-x-2 space-x-reverse"> {/* space-x-2 for closer packing */} 
+                <div className="flex items-center md:space-x-2 space-x-reverse md:flex-row flex-col md:space-y-0 space-y-1"> {/* Modified: flex-col on small, flex-row on md+, reduced space-y */}
                   {/* User Name - visually rightmost in this group for RTL */}
                   <div className="text-xs sm:text-sm text-[var(--background)]">
                     {isAnonymousUser ? "אורח" : userName || "טוען..."}
@@ -404,7 +404,7 @@ export default function Home() {
                   <button
                     id="history-button"
                     onClick={() => router.push("/history")}
-                    className="px-2.5 py-1 bg-slate-200 text-[var(--primary)] rounded-md hover:bg-slate-300/80 transition-colors font-medium text-xs shadow-sm"
+                    className="px-3 py-1.5 bg-slate-200 text-[var(--primary)] rounded-md hover:bg-slate-300/80 transition-colors font-medium text-sm shadow-sm"
                   >
                     היסטוריה
                   </button>
@@ -412,7 +412,7 @@ export default function Home() {
                   {/* Logout Button */} 
                   <button
                     onClick={() => { if (signOut) signOut(); router.push("/auth/sign-in"); }}
-                    className="px-2.5 py-1 bg-white text-[var(--primary)] rounded-md hover:bg-slate-100 transition-colors font-medium text-xs shadow-sm"
+                    className="px-3 py-1.5 bg-white text-[var(--primary)] rounded-md hover:bg-slate-100 transition-colors font-medium text-sm shadow-sm"
                   >
                     התנתק
                   </button>
@@ -523,7 +523,7 @@ export default function Home() {
                     {!(showOnboarding && currentTourStepId === 'view_answer') && (
                       <button 
                         onClick={handleShare}
-                        className="absolute top-3 left-3 px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors text-xs"
+                        className="absolute top-3 left-3 px-2 py-1.5 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors text-sm"
                         title="העתק שאלה ותשובה ללוח"
                       >
                         שתף

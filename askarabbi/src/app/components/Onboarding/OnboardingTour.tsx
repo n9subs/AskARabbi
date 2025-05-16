@@ -372,7 +372,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, onStepChang
         <div ref={popoverRef} style={dynamicPopoverStyle}>
           {arrowStyle && <div style={arrowStyle} />} 
           <h2 style={{ marginTop: 0, marginBottom: '16px', fontSize: '1.5rem' }}>{currentStep.title}</h2>
-          <div style={{ marginBottom: '24px', fontSize: '1rem' }}>{currentStep.content}</div>
+          <div style={{ marginBottom: '24px', fontSize: '1rem', maxHeight: 'calc(70vh - 150px)', overflowY: 'auto' }}>{currentStep.content}</div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', direction: 'rtl' }}>
             <div>
               {currentStepIndex > 0 && (

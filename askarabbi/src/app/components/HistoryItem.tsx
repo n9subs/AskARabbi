@@ -62,8 +62,8 @@ const HistoryItem: React.FC<HistoryItemProps> = ({ item, onDeleteClick }) => {
   return (
     <div className="bg-white p-5 rounded-lg shadow-md border border-gray-200 hover:shadow-lg transition-shadow duration-300 ease-in-out">
       {/* Question Area (Header) */}
-      <div className="mb-4 pb-2 border-b border-gray-200"> 
-        <div className="flex items-center justify-between space-x-2 space-x-reverse">
+      <div className="mb-4 pb-2 border-b border-gray-200">
+        <div className="flex flex-col items-stretch space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 sm:space-x-2 sm:space-x-reverse">
           {/* Question Text */}
           <div className="flex-grow">
             <h3 className="text-xl font-semibold text-gray-700 mb-1">שאלה:</h3>
@@ -73,7 +73,7 @@ const HistoryItem: React.FC<HistoryItemProps> = ({ item, onDeleteClick }) => {
           </div>
 
           {/* Action Icons Container */}
-          <div className="relative flex items-center flex-shrink-0 space-x-2 space-x-reverse">
+          <div className="relative flex items-center self-end flex-shrink-0 space-x-2 space-x-reverse">
             {/* Share Button */}
             <button
               onClick={handleShare}
@@ -148,7 +148,7 @@ const HistoryItem: React.FC<HistoryItemProps> = ({ item, onDeleteClick }) => {
           </div>
 
           {/* Timestamp */}
-          <p className="text-xs text-gray-400 text-left mt-4 pt-3 border-t border-gray-100">
+          <p className="text-xs text-gray-400 text-right mt-4 pt-3 border-t border-gray-100">
             נשאל בתאריך: {new Date(item.timestamp).toLocaleString('he-IL', { dateStyle: 'short', timeStyle: 'short' })}
           </p>
       </div>

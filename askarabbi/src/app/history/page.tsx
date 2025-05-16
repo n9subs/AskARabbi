@@ -125,21 +125,21 @@ export default function HistoryPage() {
 
             <div className="flex-shrink-0">
               {userId ? (
-                <div className="flex items-center space-x-2 space-x-reverse">
+                <div className="flex items-center md:space-x-2 space-x-reverse md:flex-row flex-col md:space-y-0 space-y-1">
                   <div className="text-xs sm:text-sm text-[var(--background)]">
                     {isAnonymousUser ? "אורח" : userName || "טוען..."}
                   </div>
 
                   <button
                     onClick={() => router.push("/")}
-                    className="px-2.5 py-1 bg-slate-200 text-[var(--primary)] rounded-md hover:bg-slate-300/80 transition-colors font-medium text-xs shadow-sm"
+                    className="px-3 py-1.5 bg-slate-200 text-[var(--primary)] rounded-md hover:bg-slate-300/80 transition-colors font-medium text-sm shadow-sm"
                   >
                     דף ראשי
                   </button>
 
                   <button
                     onClick={() => { if (signOut) signOut(); router.push("/auth/sign-in"); }}
-                    className="px-2.5 py-1 bg-white text-[var(--primary)] rounded-md hover:bg-slate-100 transition-colors font-medium text-xs shadow-sm"
+                    className="px-3 py-1.5 bg-white text-[var(--primary)] rounded-md hover:bg-slate-100 transition-colors font-medium text-sm shadow-sm"
                   >
                     התנתק
                   </button>

@@ -557,7 +557,7 @@ export default function TestShabatPage() {
           <div className="flex-shrink-0">
             <button
               onClick={() => router.push("/qualified")}
-              className="px-2.5 py-1 bg-slate-200 text-[var(--primary)] rounded-md hover:bg-slate-300/80 transition-colors font-medium text-xs shadow-sm"
+              className="px-3 py-1.5 bg-slate-200 text-[var(--primary)] rounded-md hover:bg-slate-300/80 transition-colors font-medium text-sm shadow-sm"
             >
               חזרה למבחנים
             </button>
