@@ -202,7 +202,7 @@ function SignInClientLogic() {
           <p>משתמשים אנונימיים: 5 שאלות.</p>
         </div>
 
-        <Image src={logo} alt="AskARabbi Logo" className="h-16 mx-auto" width={64} height={64} />
+        <Image src={logo} alt="לוגו שאלת'רב" className="h-16 mx-auto" width={64} height={64} />
 
       </div>
     </div>
@@ -211,7 +211,7 @@ function SignInClientLogic() {
 
 export default function SignInPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[var(--background)]"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[var(--primary)]"></div><p className="ml-4 text-lg">טוען...</p></div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[var(--background)]"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[var(--primary)]"></div><p className="mr-4 text-lg">טוען...</p></div>}>
       <SignInClientLogic />
     </Suspense>
   );

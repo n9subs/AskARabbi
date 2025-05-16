@@ -14,9 +14,9 @@ export default function History() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-semibold">Your History</h2>
+      <h2 className="text-xl font-semibold">ההיסטוריה שלך</h2>
       {history.length === 0 ? (
-        <p className="text-gray-500">No questions asked yet</p>
+        <p className="text-gray-500">עדיין לא נשאלו שאלות</p>
       ) : (
         <div className="space-y-4">
           {history.map((item) => (

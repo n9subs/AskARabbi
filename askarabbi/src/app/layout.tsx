@@ -26,9 +26,9 @@ export const metadata: Metadata = {
   description: "אפליקציה לשאלות ותשובות על יהדות על פי התורה והתלמוד.",
   keywords: ["Jewish Q&A", "Ask a Rabbi", "Torah questions", "Judaism", "שאלות ותשובות", "יהדות", "תורה", "שאלתירב", "שאלתי רב", "שאלתרב", "שאלת רב", "שאלת'רב", "שאילתת רב", "שאלות הלכה", "שאלה הלכתית",],
   metadataBase: new URL('https://askarabbi.online'),
-  authors: [{ name: 'AskARabbi Team' }],
-  creator: 'AskARabbi',
-  publisher: 'AskARabbi',
+  authors: [{ name: 'שאלתרב' }],
+  creator: 'שאלתרב',
+  publisher: 'שאלתרב',
   formatDetection: {
     email: false,
     address: false,
@@ -49,14 +49,14 @@ export const metadata: Metadata = {
     description: "אפליקציה לשאלות ותשובות על יהדות על פי התורה והתלמוד.",
     type: "website",
     url: "https://askarabbi.online",
-    siteName: "AskARabbi",
+    siteName: "שאלת'רב",
     locale: "he_IL",
     images: [
       {
         url: "https://askarabbi.online/preview.jpg",
         width: 1200,
         height: 630,
-        alt: "AskaRabbi Site Preview",
+        alt: "שאלת'רב",
       },
     ],
   },
@@ -74,11 +74,11 @@ export const metadata: Metadata = {
     // yandex: 'your-yandex-verification',
   },
   appleWebApp: {
-    title: "AskARabbi",
+    title: "שאלת'רב",
     statusBarStyle: "black-translucent",
     capable: true,
   },
-  applicationName: "AskARabbi",
+  applicationName: "שאלת'רב",
   category: "education",
   manifest: "/manifest.json",
 };

@@ -26,7 +26,6 @@ if (process.env.GEMINI_API_KEY) {
   try {
     genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 } catch (e) {
-    console.error("Failed to instantiate GoogleGenAI client. Ensure GEMINI_API_KEY is valid.", e);
   if (e instanceof Error) {
       throw new Error(`Failed to instantiate GoogleGenAI client: ${e.message}`);
   } else {
@@ -34,7 +33,6 @@ if (process.env.GEMINI_API_KEY) {
     }
   }
 } else {
-  console.error("GEMINI_API_KEY is not set.");
   throw new Error("GEMINI_API_KEY is not set in environment variables.");
 }
 
@@ -91,12 +89,10 @@ export function getJewishSystemPrompt(): string {
  */
 export async function queryAIAPI(question: string): Promise<StructuredAnswer> {
   if (!genAI) {
-    console.error("GoogleGenAI client not initialized. Cannot proceed.");
     throw new Error("GoogleGenAI client failed to initialize. Check GEMINI_API_KEY.");
   }
 
   const systemPrompt = getJewishSystemPrompt();
-  console.log('Querying Google GenAI with:', { question });
 
   const modelName = 'gemini-1.5-flash-latest'; // Using a standard model, was 'gemini-2.5-pro-preview-05-06' in example, ensure this is available
   const model = genAI.getGenerativeModel({
@@ -118,11 +114,9 @@ export async function queryAIAPI(question: string): Promise<StructuredAnswer> {
     const response = result.response;
     const rawContent = response.text();
     
-    console.log("Raw Google GenAI response content:", rawContent);
     return parseAIResponse(rawContent); // Renamed from parseGroqResponse
 
   } catch (error: unknown) {
-    console.error('Error calling Google GenAI SDK:', error);
     let errorMessage = 'An unknown error occurred during Google GenAI SDK call.';
     if (error instanceof Error) {
         errorMessage = error.message;
@@ -142,11 +136,8 @@ export async function queryAIAPI(question: string): Promise<StructuredAnswer> {
 export function parseAIResponse(content: string | null): StructuredAnswer { // Renamed from parseGroqResponse
   const result: StructuredAnswer = { tanakh: '', talmud: '', web: '', summary: '' };
   if (!content) {
-    console.warn("Received null or empty content from AI API.");
     return result; // Return empty structure if no content
   }
-
-  console.log("Attempting to parse content (AI version):", content);
 
   // Define markers with optional markdown and colon
   const markers = {
@@ -234,10 +225,8 @@ export function parseAIResponse(content: string | null): StructuredAnswer { // R
 
   // Fallback: If all sections are empty, put the whole content into tanakh
   if (!result.tanakh && !result.talmud && !result.web && !result.summary && content) {
-    console.warn("No structured sections found in AI response. Using full content as Tanakh fallback.");
     result.tanakh = content.trim(); 
   }
 
-  console.log("Parsed AI Response:", result);
   return result;
 } 

@@ -6,9 +6,9 @@ export default function TermsOfServicePage() {
       <h1 className="text-3xl font-bold mb-6 text-center">תנאי שימוש</h1>
 
       <section className="mb-6">
-        <h2 className="text-2xl font-semibold mb-3">ברוכים הבאים ל-AskARabbi</h2>
+        <h2 className="text-2xl font-semibold mb-3">ברוכים הבאים ל-שאלת&apos;רב</h2>
         <p className="mb-2">
-          השימוש באפליקציית AskARabbi (להלן: &quot;האפליקציה&quot;) כפוף לתנאים המפורטים להלן. אנא קרא אותם בעיון. עצם השימוש באפליקציה מהווה הסכמה לתנאים אלו.
+          השימוש באפליקציית שאלת&apos;רב (להלן: &quot;האפליקציה&quot;) כפוף לתנאים המפורטים להלן. אנא קרא אותם בעיון. עצם השימוש באפליקציה מהווה הסכמה לתנאים אלו.
         </p>
       </section>
 

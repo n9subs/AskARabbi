@@ -1,6 +1,6 @@
 {
   "name": "AskARabbi - שאלת'רב",
-  "short_name": "AskARabbi",
+  "short_name": "שאלת'רב",
   "description": "אפליקציה לשאלות ותשובות על יהדות על פי התורה והתלמוד.",
   "start_url": "/",
   "display": "standalone",

@@ -61,7 +61,7 @@ export default function SignUpPage() {
       <div className="max-w-md w-full space-y-8 bg-white p-8 sm:p-10 rounded-xl shadow-xl border border-gray-200">
         <div>
 
-            <Image src={logo} alt="AskARabbi Logo" className="h-16 mx-auto" width={64} height={64} />
+            <Image src={logo} alt="לוגו שאלת'רב" className="h-16 mx-auto" width={64} height={64} />
 
           <h2 className="mt-6 text-center text-3xl font-extrabold text-[var(--primary)]">
             הרשמה לשאלת&apos;רב
@@ -125,7 +125,7 @@ export default function SignUpPage() {
               onChange={(e) => setTermsAccepted(e.target.checked)}
               className="h-4 w-4 text-[var(--primary)] border-gray-300 rounded focus:ring-[var(--primary)] accent-[var(--primary)]"
             />
-            <label htmlFor="terms-and-conditions" className="ml-2 mr-2 block text-sm text-gray-700">
+            <label htmlFor="terms-and-conditions" className="mr-2 block text-sm text-gray-700">
               אני מאשר/ת שקראתי ואני מסכים/ה ל
               <Link href="/terms" target="_blank" className="font-medium text-[var(--primary)] hover:text-[var(--secondary)] underline px-1">
                 תנאי השימוש

@@ -338,19 +338,20 @@ export default function Home() {
           await navigator.share({
             title: 'תשובה מאתר שאלת\'רב',
             text: shareText,
-          });
-          // Successfully shared via native share UI
-        } catch (err) {
-          console.error('Error using Web Share API:', err);
-          // If sharing fails (e.g., user cancels), we could optionally fall back
-          // to clipboard, but for now, let's stick to the original error logging.
-          // If specific errors like AbortError, do nothing more.
-        }
-      } else { // Fallback for desktop or unsupported/non-mobile user agents
-        try {
-          await navigator.clipboard.writeText(shareText);
-          setShowShareConfirmation(true);
-          setTimeout(() => setShowShareConfirmation(false), 2000);
+          url: 'https://askarabbi.online',
+        });
+        // Successfully shared via native share UI
+      } catch (err) {
+        console.error('Error using Web Share API:', err);
+        // If sharing fails (e.g., user cancels), we could optionally fall back
+        // to clipboard, but for now, let's stick to the original error logging.
+        // If specific errors like AbortError, do nothing more.
+      }
+    } else { // Fallback for desktop or unsupported/non-mobile user agents
+      try {
+        await navigator.clipboard.writeText(shareText);
+        setShowShareConfirmation(true);
+        setTimeout(() => setShowShareConfirmation(false), 2000);
         } catch (err) {
           console.error('Failed to copy text: ', err);
           // Optionally, set an error message for sharing failure
@@ -363,7 +364,7 @@ export default function Home() {
     <RouteGuard>
       <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] dark:bg-[var(--background)] dark:text-[var(--foreground)] flex flex-col">
         {showOnboarding && 
-          <OnboardingTour 
+          <OnboardingTour
             onComplete={() => {
               setShowOnboarding(false);
               setCurrentTourStepId(null); 
@@ -617,7 +618,7 @@ export default function Home() {
             </Link>
           </div>
           <p className="mt-2">טוֹב לְהוֹדוֹת לָה&apos;</p>
-          <Image src={logo} alt="AskARabbi Logo" className="h-10 mx-auto mt-2" width={40} height={40} />
+          <Image src={logo} alt="שאלת&apos;רב Logo" className="h-10 mx-auto mt-2" width={40} height={40} />
         </footer>
       </div>
       {/* Disclaimer Popup */}

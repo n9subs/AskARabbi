@@ -212,7 +212,7 @@ export default function HistoryPage() {
 
         {/* Footer with Logo */}
         <footer className="p-4 bg-[var(--primary-muted)] text-center">
-          <Image src={logo} alt="AskARabbi Logo" className="h-10 mx-auto" width={40} height={40} />
+          <Image src={logo} alt="לוגו שאלת'רב" className="h-10 mx-auto" width={40} height={40} />
         </footer>
 
       </div>

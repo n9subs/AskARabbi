@@ -66,8 +66,8 @@ export default function QualifiedOverviewPage() {
             בס&quot;ד
           </div>
           <div className="flex-grow text-center px-4">
-            <h1 className="text-2xl sm:text-3xl font-bold">מבחני כשירות לרבנות</h1>
-            <p className="mt-1 text-xs sm:text-sm">בחר מבחן הלכה מטה</p>
+            <h1 className="text-2xl sm:text-3xl font-bold">מבחני הסמכה רשמיים לרבנות</h1>
+            <p className="mt-1 text-xs sm:text-sm">מחני הסמכה רשמיים</p>
           </div>
           <div className="flex-shrink-0">
             <button
@@ -91,7 +91,7 @@ export default function QualifiedOverviewPage() {
       <footer className="p-4 bg-[var(--primary-muted)] text-center mt-8">
         <Image src={logo} alt="AskARabbi Logo" className="h-10 mx-auto" width={40} height={40} />
         <p className="text-xs text-[var(--primary-foreground)] opacity-75 mt-1">
-            © {new Date().getFullYear()} AskARabbi. כל הזכויות שמורות.
+            © {new Date().getFullYear()} שאלת&apos;רב. כל הזכויות שמורות.
         </p>
       </footer>
     </div>

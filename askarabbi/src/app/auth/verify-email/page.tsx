@@ -65,7 +65,7 @@ function VerifyEmailClientLogic() {
     <div dir="rtl" className="min-h-screen flex flex-col items-center justify-center bg-[var(--background)] py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 bg-white p-8 sm:p-10 rounded-xl shadow-xl border border-gray-200">
         <div>
-            <Image src={logo} alt="AskARabbi Logo" className="h-16 mx-auto" width={64} height={64} />
+            <Image src={logo} alt="לוגו שאלת'רב" className="h-16 mx-auto" width={64} height={64} />
           <h2 className="mt-6 text-center text-3xl font-extrabold text-[var(--primary)]">
             אימות כתובת אימייל
           </h2>
@@ -103,7 +103,7 @@ function VerifyEmailClientLogic() {
 
 export default function VerifyEmailPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[var(--background)]"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[var(--primary)]"></div><p className="ml-4 text-lg">טוען...</p></div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[var(--background)]"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[var(--primary)]"></div><p className="mr-4 text-lg">טוען...</p></div>}>
       <VerifyEmailClientLogic />
     </Suspense>
   );

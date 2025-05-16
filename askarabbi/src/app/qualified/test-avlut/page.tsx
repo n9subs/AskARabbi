@@ -580,7 +580,7 @@ export default function TestAvlutPage() {
       <footer className="p-4 bg-[var(--primary-muted)] text-center mt-8">
         <Image src={logo} alt="AskARabbi Logo" className="h-10 mx-auto" width={40} height={40} />
         <p className="text-xs text-[var(--primary-foreground)] opacity-75 mt-1">
-            © {new Date().getFullYear()} AskARabbi. כל הזכויות שמורות.
+            © {new Date().getFullYear()} שאלת&apos;רב. כל הזכויות שמורות.
         </p>
       </footer>
     </div>

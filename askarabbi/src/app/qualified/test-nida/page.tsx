@@ -545,13 +545,11 @@ function parseTestContent(content: string): { intro: string[]; testDisplayItems:
     testDisplayItems.push(currentQA);
   }
 
-  console.log("ParseTestContent Finished. Intro lines: " + intro.length + ", TestDisplayItems: " + testDisplayItems.length);
-  if (testDisplayItems.some(item => item.type === 'question')) {
-    const firstQ = testDisplayItems.find(item => item.type === 'question') as QAPair | undefined;
-    if (firstQ) {
-        console.log("First Q parsed: Header='", firstQ.questionHeader, "' BodyLines=", firstQ.questionBodyLines.length, "SubQs=", firstQ.questions.length);
-    }
-  }
+  // console.log("ParseTestContent Finished. Intro lines: " + intro.length + ", TestDisplayItems: " + testDisplayItems.length);
+  // if (testDisplayItems.length > 0 && testDisplayItems[0]) {
+  //   const firstQ = testDisplayItems[0];
+    // console.log("First Q parsed: Header='", firstQ.questionHeader, "' BodyLines=", firstQ.questionBodyLines.length, "SubQs=", firstQ.questions.length);
+  // }
   return { intro, testDisplayItems };
 }
 
@@ -561,7 +559,7 @@ export default function TestNidaPage() {
   const [openStates, setOpenStates] = React.useState<Record<string, boolean>>({});
 
   React.useEffect(() => {
-    console.log("TestNidaPage data (testDisplayItems):", testDisplayItems);
+    // console.log("TestNidaPage data (testDisplayItems):", testDisplayItems);
   }, [testDisplayItems]);
 
   const toggleAnswer = (key: string) => {
@@ -648,11 +646,11 @@ export default function TestNidaPage() {
                 const mainAnswerDataAttempt = answersMap[answerMapKey];
                 const mainAnswerData = mainAnswerDataAttempt?.subAnswers[0];
 
-                if (qa.questionNumber === "1") { // Debug for Q1 specifically
-                    console.log(`[Render Q1] answerMapKey: "${answerMapKey}"`);
-                    console.log(`[Render Q1] answersMap has key: ${answersMap.hasOwnProperty(answerMapKey)}`);
-                    console.log(`[Render Q1] mainAnswerDataAttempt: ${JSON.stringify(mainAnswerDataAttempt?.subAnswers[0])}`);
-                }
+                // if (qa.questionNumber === "1") { // Debug for Q1 specifically
+                    // console.log(`[Render Q1] answerMapKey: "${answerMapKey}"`);
+                    // console.log(`[Render Q1] answersMap has key: ${answersMap.hasOwnProperty(answerMapKey)}`);
+                    // console.log(`[Render Q1] mainAnswerDataAttempt: ${JSON.stringify(mainAnswerDataAttempt?.subAnswers[0])}`);
+                // }
 
                 return (
                   <div 
@@ -791,7 +789,7 @@ export default function TestNidaPage() {
       <footer className="p-4 bg-[var(--primary-muted)] text-center mt-8">
         <Image src={logo} alt="AskARabbi Logo" className="h-10 mx-auto" width={40} height={40} />
         <p className="text-xs text-[var(--primary-foreground)] opacity-75 mt-1">
-            © {new Date().getFullYear()} AskARabbi. כל הזכויות שמורות.
+            © {new Date().getFullYear()} שאלת&apos;רב. כל הזכויות שמורות.
         </p>
       </footer>
     </div>
