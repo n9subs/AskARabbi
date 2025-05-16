@@ -11,6 +11,7 @@ import dynamic from 'next/dynamic';
 import Image from "next/image";
 import logo from "../../public/logo.png";
 import OnboardingTour from './components/Onboarding/OnboardingTour';
+import officialRabbiStamp from "../../public/official-rabbi.png";
 
 // Dynamically import the new ScrollWriterLoader
 const ScrollWriterLoader = dynamic(() => import('./components/ScrollWriterLoader'), { 
@@ -362,7 +363,23 @@ export default function Home() {
 
   return (
     <RouteGuard>
-      <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] dark:bg-[var(--background)] dark:text-[var(--foreground)] flex flex-col">
+      <div dir="rtl" className="flex flex-col min-h-screen bg-gray-100 text-gray-800 relative">
+        {/* Qualified Rabbi Stamp */}
+        <Link href="/qualified" passHref legacyBehavior>
+          <a
+            className="absolute z-[1000] top-80 right-2 md:right-3 lg:right-4 transform rotate-45"
+          >
+            <div className="relative w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24"> {/* Responsive wrapper for size */}
+              <Image
+                src={officialRabbiStamp}
+                alt="Qualified Rabbi Stamp"
+                layout="fill"
+                objectFit="contain" // Ensures the image fits within the bounds without cropping
+              />
+            </div>
+          </a>
+        </Link>
+
         {showOnboarding && 
           <OnboardingTour
             onComplete={() => {
