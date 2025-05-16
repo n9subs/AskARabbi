@@ -202,7 +202,7 @@ function SignInClientLogic() {
           <p>משתמשים אנונימיים: 5 שאלות.</p>
         </div>
 
-        <Image src={logo} alt="לוגו שאלת'רב" className="h-16 mx-auto" width={64} height={64} />
+        <Image src={logo} alt="לוגו שאלת'רב" className="h-16 mx-auto" width={64} height={64} style={{ width: "auto" }} />
 
       </div>
     </div>

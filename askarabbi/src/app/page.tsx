@@ -365,19 +365,16 @@ export default function Home() {
     <RouteGuard>
       <div dir="rtl" className="flex flex-col min-h-screen bg-gray-100 text-gray-800 relative">
         {/* Qualified Rabbi Stamp */}
-        <Link href="/qualified" passHref legacyBehavior>
-          <a
-            className="absolute z-[1000] top-80 right-2 md:right-3 lg:right-4 transform rotate-45"
-          >
-            <div className="relative w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24"> {/* Responsive wrapper for size */}
-              <Image
-                src={officialRabbiStamp}
-                alt="Qualified Rabbi Stamp"
-                layout="fill"
-                objectFit="contain" // Ensures the image fits within the bounds without cropping
-              />
-            </div>
-          </a>
+        <Link href="/qualified" className="absolute z-[1000] top-80 right-2 md:right-3 lg:right-4 transform rotate-45">
+          <div className="relative w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24"> {/* Responsive wrapper for size */}
+            <Image
+              src={officialRabbiStamp}
+              alt="Qualified Rabbi Stamp"
+              fill
+              sizes="(min-width: 1024px) 6rem, (min-width: 768px) 5rem, 4rem"
+              style={{ objectFit: "contain" }} // Ensures the image fits within the bounds without cropping
+            />
+          </div>
         </Link>
 
         {showOnboarding && 
