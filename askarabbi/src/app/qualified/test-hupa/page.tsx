@@ -303,7 +303,7 @@ interface SectionHeaderItem {
 type TestDisplayItem = QAPair | SectionHeaderItem;
 
 function parseTestContent(content: string): { intro: string[]; testDisplayItems: TestDisplayItem[] } {
-  console.log("Starting parseTestContent (interleaved sections)");
+  // console.log("Starting parseTestContent (interleaved sections)");
 
   const productionMainQuestionRegex = /^\s*(\d+)\)\s*(.+)/; 
   const subQuestionRegex = /^([א-ת])\.\s*(.+)/; 
@@ -372,7 +372,7 @@ function parseTestContent(content: string): { intro: string[]; testDisplayItems:
     testDisplayItems.push(currentQA);
   }
 
-  console.log("ParseTestContent Finished. Intro lines: " + intro.length + ", TestDisplayItems: " + testDisplayItems.length);
+  // console.log("ParseTestContent Finished. Intro lines: " + intro.length + ", TestDisplayItems: " + testDisplayItems.length);
   return { intro, testDisplayItems };
 }
 
@@ -382,7 +382,7 @@ export default function TestHupaPage() {
   const [openStates, setOpenStates] = React.useState<Record<string, boolean>>({});
 
   React.useEffect(() => {
-    console.log("TestHupaPage data (testDisplayItems):", testDisplayItems);
+    // console.log("TestHupaPage data (testDisplayItems):", testDisplayItems);
   }, [testDisplayItems]);
 
   const toggleAnswer = (key: string) => {

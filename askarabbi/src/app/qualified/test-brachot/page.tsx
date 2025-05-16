@@ -223,7 +223,7 @@ interface SectionHeaderItem {
 type TestDisplayItem = QAPair | SectionHeaderItem;
 
 function parseTestContent(content: string): { intro: string[]; testDisplayItems: TestDisplayItem[] } {
-  console.log("Starting parseTestContent for Brachot test");
+  // console.log("Starting parseTestContent for Brachot test");
 
   const productionMainQuestionRegex = /^([א-ת]{1,2})\)(.*)/; // Captures one or two letters and everything after ')'
   const subQuestionRegex = /^\s*(\d+)\.\s*(.+)/;
@@ -323,7 +323,7 @@ function parseTestContent(content: string): { intro: string[]; testDisplayItems:
     testDisplayItems.push(currentQA);
   }
 
-  console.log("ParseTestContent Finished. Intro lines: " + intro.length + ", TestDisplayItems: " + testDisplayItems.length);
+  // console.log("ParseTestContent Finished. Intro lines: " + intro.length + ", TestDisplayItems: " + testDisplayItems.length);
   return { intro, testDisplayItems };
 }
 
@@ -333,7 +333,7 @@ export default function TestBrachotPage() {
   const [openStates, setOpenStates] = React.useState<Record<string, boolean>>({});
 
   React.useEffect(() => {
-    console.log("TestBrachotPage data (testDisplayItems):", testDisplayItems);
+    // console.log("TestBrachotPage data (testDisplayItems):", testDisplayItems);
   }, [testDisplayItems]);
 
   const toggleAnswer = (key: string) => {

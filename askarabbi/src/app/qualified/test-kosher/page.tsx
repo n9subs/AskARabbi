@@ -388,7 +388,7 @@ interface QAPair {
 }
 
 function parseTestContent(content: string): { intro: string[]; questionsAndAnswers: QAPair[] } {
-  console.log("Starting parseTestContent Function V3");
+  // console.log("Starting parseTestContent Function V3");
 
   // Define regex using RegExp constructor for clarity and to avoid literal parsing issues
   const mainQuestionRegexString = "^(\\d+)\\.\\s+\\*\\*(.+?)\\*\\*";
@@ -397,19 +397,19 @@ function parseTestContent(content: string): { intro: string[]; questionsAndAnswe
   const subQuestionRegexString = "^([א-ת])\\.\\s*(.+)";
   const subQuestionRegex = new RegExp(subQuestionRegexString);
 
-  console.log("Actual MainQ Regex Source:", mainQuestionRegex.source);
-  console.log("Actual SubQ Regex Source:", subQuestionRegex.source);
+  // console.log("Actual MainQ Regex Source:", mainQuestionRegex.source);
+  // console.log("Actual SubQ Regex Source:", subQuestionRegex.source);
 
   const hardcodedTestLine = "1.  **בשר ששהה ג' ימים בלא מליחה:**";
   let hardcodedCharCodes = "Hardcoded Line Chars: ";
   for (let k = 0; k < hardcodedTestLine.length; k++) { hardcodedCharCodes += hardcodedTestLine.charCodeAt(k) + " "; }
-  console.log(hardcodedCharCodes);
-  console.log(`HARDCODED REGEX TEST on: "${hardcodedTestLine}"`);
+  // console.log(hardcodedCharCodes);
+  // console.log(`HARDCODED REGEX TEST on: \\"${hardcodedTestLine}\\"`);
   const hardcodedMatch = hardcodedTestLine.match(mainQuestionRegex);
-  console.log(`   Result of mainQuestionRegex.match():`, hardcodedMatch);
+  // console.log(`   Result of mainQuestionRegex.match():`, hardcodedMatch);
   if (hardcodedMatch) {
-    console.log(`       Matched Group 1 (number): ${hardcodedMatch[1]}`);
-    console.log(`       Matched Group 2 (header): ${hardcodedMatch[2]}`);
+    // console.log(`       Matched Group 1 (number): ${hardcodedMatch[1]}`);
+    // console.log(`       Matched Group 2 (header): ${hardcodedMatch[2]}`);
   }
 
   const lines = content.split('\n');
@@ -421,7 +421,7 @@ function parseTestContent(content: string): { intro: string[]; questionsAndAnswe
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
-    // console.log(`[L:${i}] Raw: "${lines[i]}" Trimmed: "${line}"`);
+    // console.log(`[L:${i}] Raw: \\"${lines[i]}\\" Trimmed: \\"${line}\\"`);
 
     if (parsingIntro) {
       // Log char codes for potential first question line for debugging
@@ -430,18 +430,18 @@ function parseTestContent(content: string): { intro: string[]; questionsAndAnswe
         for (let k = 0; k < line.length; k++) {
           fileLineCharCodes += line.charCodeAt(k) + " ";
         }
-        console.log(fileLineCharCodes);
+        // console.log(fileLineCharCodes);
       }
 
       if (mainQuestionRegex.test(line)) {
-        console.log(`[L:${i}] FIRST Main Question found. Switching to inQuestionBlock. Line: "${line}"`);
+        // console.log(`[L:${i}] FIRST Main Question found. Switching to inQuestionBlock. Line: \\"${line}\\"`);
         parsingIntro = false;
         inQuestionBlock = true;
-        // This line is the first question, so process it in the 'inQuestionBlock' section below
-        // Fall through to the 'inQuestionBlock' logic for this line
+        // This line is the first question, so process it in the \'inQuestionBlock\' section below
+        // Fall through to the \'inQuestionBlock\' logic for this line
       } else {
-        if (line) intro.push(line); // Add to intro if it's not the start of questions
-        if (line === "---") console.log(`[L:${i}] --- in intro`);
+        if (line) intro.push(line); // Add to intro if it\'s not the start of questions
+        if (line === "---") {} // console.log(`[L:${i}] --- in intro`);
         continue; // Continue to next line if still in intro and not the first question line
       }
     }
@@ -453,22 +453,22 @@ function parseTestContent(content: string): { intro: string[]; questionsAndAnswe
 
       // Log for lines that *should* be questions
       if (isMainQ || isSubQ) { // Simplified condition for logging potential Q lines
-        console.log(`[L:${i}] InQuestionBlock - Testing Line: "${line}"`);
-        console.log(`   Is MainQ Regex Test: ${isMainQ}`);
-        console.log(`   Is SubQ Regex Test: ${isSubQ}`);
+        // console.log(`[L:${i}] InQuestionBlock - Testing Line: \\"${line}\\"`);
+        // console.log(`   Is MainQ Regex Test: ${isMainQ}`);
+        // console.log(`   Is SubQ Regex Test: ${isSubQ}`);
       }
 
       if (isMainQ) {
         const questionHeaderMatch = line.match(mainQuestionRegex)!;
-        console.log(`   MATCHED Main Q: '${questionHeaderMatch[2].trim()}'`);
+        // console.log(`   MATCHED Main Q: \'${questionHeaderMatch[2].trim()}\'`);
         if (currentQA) questionsAndAnswers.push(currentQA);
         currentQA = { questionNumber: questionHeaderMatch[1], questionHeader: questionHeaderMatch[2].trim(), questions: [] };
       } else if (isSubQ && currentQA) {
         const subQuestionMatch = line.match(subQuestionRegex)!; // Correctly use subQuestionRegex
-        console.log(`   MATCHED Sub Q: '${subQuestionMatch[2].trim()}' for '${currentQA.questionHeader}'`);
+        // console.log(`   MATCHED Sub Q: \'${subQuestionMatch[2].trim()}\' for \'${currentQA.questionHeader}\'`);
         currentQA.questions.push(line);
       } else if (line === '---') {
-        console.log(`[L:${i}] --- separator found inQuestionBlock.`);
+        // console.log(`[L:${i}] --- separator found inQuestionBlock.`);
         if (currentQA) {
           questionsAndAnswers.push(currentQA);
           currentQA = null;
@@ -480,12 +480,12 @@ function parseTestContent(content: string): { intro: string[]; questionsAndAnswe
           // Correctly use both regexes for footer detection
           if (mainQuestionRegex.test(nextLineTrimmed) || subQuestionRegex.test(nextLineTrimmed)) {
             isFooter = false;
-            console.log(`   --- is NOT footer. More questions detected.`);
+            // console.log(`   --- is NOT footer. More questions detected.`);
             break;
           }
         }
         if (isFooter) {
-          console.log(`   --- IS footer. Ending Q&A parsing.`);
+          // console.log(`   --- IS footer. Ending Q&A parsing.`);
           intro.push("---"); // Add the separator itself to intro (as part of footer)
           for (let k = i + 1; k < lines.length; k++) { // Add all remaining lines to intro as footer
             if(lines[k].trim()) intro.push(lines[k].trim());
@@ -494,7 +494,7 @@ function parseTestContent(content: string): { intro: string[]; questionsAndAnswe
         }
       } else if (line && currentQA && currentQA.questions.length > 0 && !isMainQ && !isSubQ && line !=='**בהצלחה**'){
           // Potentially a continuation line of a sub-question. For now, we are not appending.
-          // console.log(`[L:${i}] Possible continuation/instruction line: "${line}"`);
+          // console.log(`[L:${i}] Possible continuation/instruction line: \\"${line}\\"`);
       }
     }
   }
@@ -503,9 +503,9 @@ function parseTestContent(content: string): { intro: string[]; questionsAndAnswe
     questionsAndAnswers.push(currentQA);
   }
 
-  console.log(`ParseTestContent Finished. Intro Lines: ${intro.length}, Q&A Pairs: ${questionsAndAnswers.length}`);
+  // console.log(`ParseTestContent Finished. Intro Lines: ${intro.length}, Q&A Pairs: ${questionsAndAnswers.length}`);
   if (questionsAndAnswers.length > 0) {
-    console.log("First Q&A Header:", questionsAndAnswers[0].questionHeader, "Subs count:", questionsAndAnswers[0].questions.length);
+    // console.log("First Q&A Header:", questionsAndAnswers[0].questionHeader, "Subs count:", questionsAndAnswers[0].questions.length);
     if(questionsAndAnswers[0].questions.length > 0) console.log("First sub of first Q&A:", questionsAndAnswers[0].questions[0]);
   }
   return { intro, questionsAndAnswers };
@@ -517,7 +517,7 @@ export default function QualifiedPage() {
   const [openStates, setOpenStates] = React.useState<Record<string, boolean>>({});
 
   React.useEffect(() => {
-    console.log("QualifiedPage received questionsAndAnswers data:", questionsAndAnswers);
+    // console.log("QualifiedPage received questionsAndAnswers data:", questionsAndAnswers);
   }, [questionsAndAnswers]);
 
   const toggleAnswer = (key: string) => {

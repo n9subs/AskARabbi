@@ -461,7 +461,7 @@ interface SectionHeaderItem {
 type TestDisplayItem = QAPair | SectionHeaderItem;
 
 function parseTestContent(content: string): { intro: string[]; testDisplayItems: TestDisplayItem[] } {
-  console.log("Starting parseTestContent (interleaved sections)");
+  // console.log("Starting parseTestContent (interleaved sections)");
 
   const productionMainQuestionRegex = /^\s*(\d+)\)\s*(.+)/; 
   const subQuestionRegex = /^([א-ת])\.\s*(.+)/; 
