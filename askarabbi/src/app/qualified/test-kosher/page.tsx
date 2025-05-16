@@ -401,10 +401,7 @@ function parseTestContent(content: string): { intro: string[]; questionsAndAnswe
   // console.log("Actual SubQ Regex Source:", subQuestionRegex.source);
 
   const hardcodedTestLine = "1.  **בשר ששהה ג' ימים בלא מליחה:**";
-  let hardcodedCharCodes = "Hardcoded Line Chars: ";
-  for (let k = 0; k < hardcodedTestLine.length; k++) { hardcodedCharCodes += hardcodedTestLine.charCodeAt(k) + " "; }
-  // console.log(hardcodedCharCodes);
-  // console.log(`HARDCODED REGEX TEST on: \\"${hardcodedTestLine}\\"`);
+  // console.log(`HARDCODED REGEX TEST on: \\\"${hardcodedTestLine}\\\"`);
   const hardcodedMatch = hardcodedTestLine.match(mainQuestionRegex);
   // console.log(`   Result of mainQuestionRegex.match():`, hardcodedMatch);
   if (hardcodedMatch) {
@@ -426,11 +423,7 @@ function parseTestContent(content: string): { intro: string[]; questionsAndAnswe
     if (parsingIntro) {
       // Log char codes for potential first question line for debugging
       if (line.startsWith("1. ")) { // Broad check for lines starting with "1. "
-        let fileLineCharCodes = `[L:${i}] File Line Chars for "${line.substring(0,30)}...": `;
-        for (let k = 0; k < line.length; k++) {
-          fileLineCharCodes += line.charCodeAt(k) + " ";
-        }
-        // console.log(fileLineCharCodes);
+        // console.log(fileLineCharCodes); // This line used the removed fileLineCharCodes
       }
 
       if (mainQuestionRegex.test(line)) {
@@ -464,8 +457,8 @@ function parseTestContent(content: string): { intro: string[]; questionsAndAnswe
         if (currentQA) questionsAndAnswers.push(currentQA);
         currentQA = { questionNumber: questionHeaderMatch[1], questionHeader: questionHeaderMatch[2].trim(), questions: [] };
       } else if (isSubQ && currentQA) {
-        const subQuestionMatch = line.match(subQuestionRegex)!; // Correctly use subQuestionRegex
-        // console.log(`   MATCHED Sub Q: \'${subQuestionMatch[2].trim()}\' for \'${currentQA.questionHeader}\'`);
+        // const subQuestionMatch = line.match(subQuestionRegex)!; // Correctly use subQuestionRegex
+        // console.log(`   MATCHED Sub Q: \'${line.match(subQuestionRegex)![2].trim()}\' for \'${currentQA.questionHeader}\'`);
         currentQA.questions.push(line);
       } else if (line === '---') {
         // console.log(`[L:${i}] --- separator found inQuestionBlock.`);
