@@ -314,16 +314,19 @@ export default function Home() {
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter') {
-      if (e.ctrlKey) {
-        e.preventDefault();
-        if (formRef.current && question.trim() && !isLoading && !isSubmissionDisabledByTour) {
-          formRef.current.requestSubmit();
-        }
-      } else if (e.shiftKey) {
-        return;
-      } else {
-        e.preventDefault();
+    if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey) { // Allow Shift+Enter for new line
+      e.preventDefault(); // Prevent default Enter behavior (new line)
+      if (formRef.current) {
+        // Create a synthetic event for submission if needed, or call handleSubmit directly
+        // For simplicity, directly calling handleSubmit if it doesn't strictly need the event object
+        // or can be called without it / with a null/mocked event.
+        handleSubmit(new Event('submit', { cancelable: true }) as unknown as FormEvent<HTMLFormElement>);
+      }
+    } else if (e.key === 'Enter' && e.ctrlKey) {
+      e.preventDefault();
+      if (formRef.current) {
+        // Similar to above, ensure handleSubmit can be called this way
+        handleSubmit(new Event('submit', { cancelable: true }) as unknown as FormEvent<HTMLFormElement>);
       }
     }
   };
@@ -401,8 +404,8 @@ export default function Home() {
 
             {/* Middle: Title - grows to fill space */}
             <div className="flex-grow text-center px-4"> {/* px-4 for spacing from sides */}
-              <h1 className="text-2xl sm:text-3xl font-bold">יַהֲדוּת יֵשׁ תְּשׁוּבוֹת לִשְׁאֵלוֹת</h1>
-              <p className="mt-1 text-xs sm:text-sm">שָׁאַלְתָּ&apos;רבָ</p> {/* Slightly smaller subtitle */} 
+              <h1 className="text-4xl font-bold">יַהֲדוּת יֵשׁ תְּשׁוּבוֹת לִשְׁאֵלוֹת</h1>
+              <p className="mt-2 text-xl">שָׁאַלְתָּ&apos;רבָ</p>
             </div>
 
             {/* Leftmost (RTL): User Actions - takes minimal space, items packed closely */}
@@ -596,8 +599,8 @@ export default function Home() {
           
           {/* Disclaimer Text */}
           <div className="text-center text-sm text-[var(--foreground)] text-opacity-75 mt-8">
-            <p>שאלת&apos;רב אינו תחליף להתייעצות אישית עם רב</p>
-            <p>לשאלות מורכבות או רגישות, אנא פנה לרב בקהילתך</p>
+            <p style={{ color: 'red' }}>שאלת&apos;רב אינו תחליף להתייעצות אישית עם רב</p>
+            <p style={{ color: 'red' }}>לשאלות מורכבות או רגישות, אנא פנה לרב בקהילתך</p>
           </div>
         </main>
         <footer className="py-6 text-center text-sm text-[var(--foreground)] text-opacity-75">
