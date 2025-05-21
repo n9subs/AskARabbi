@@ -4,6 +4,9 @@ import "./globals.css";
 import { PostHogProvider } from "./providers";
 import { AuthProvider } from "./providers/AuthProvider";
 import ConvexClientProvider from "./providers/ConvexClientProvider";
+import { AccessibilityProvider, useAccessibility } from "./providers/AccessibilityProvider";
+import React, { useEffect } from "react"; // Added useEffect
+import AccessibilityControls from "./components/AccessibilityControls"; // Import AccessibilityControls
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -101,13 +104,41 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${hebrewFont.variable} antialiased font-hebrew`}
       >
         <ConvexClientProvider>
-          <PostHogProvider>
-            <AuthProvider>
-              {children}
-            </AuthProvider>
-          </PostHogProvider>
+          <AuthProvider>
+            <PostHogProvider>
+              <AccessibilityProvider>
+                <GlobalStyleApplicator>
+                  {children}
+                </GlobalStyleApplicator>
+              </AccessibilityProvider>
+            </PostHogProvider>
+          </AuthProvider>
         </ConvexClientProvider>
       </body>
     </html>
   );
 }
+
+// Intermediary component to consume AccessibilityContext
+const GlobalStyleApplicator: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { textSizeMultiplier } = useAccessibility();
+
+  useEffect(() => {
+    // Assuming 16px is the browser's default/base font size for 1rem.
+    // We adjust the root font size, so 'rem' units elsewhere will scale accordingly.
+    const baseFontSize = 16; // pixels
+    document.documentElement.style.fontSize = `${baseFontSize * textSizeMultiplier}px`;
+    
+    // Clean up the style when the component unmounts or before the next effect if textSizeMultiplier changes
+    return () => {
+      document.documentElement.style.fontSize = ''; // Reset to default or remove the style
+    };
+  }, [textSizeMultiplier]);
+
+  return (
+    <>
+      {children}
+      <AccessibilityControls />
+    </>
+  );
+};
