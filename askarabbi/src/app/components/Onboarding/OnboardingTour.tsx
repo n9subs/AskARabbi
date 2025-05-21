@@ -21,6 +21,7 @@ interface OnboardingTourProps {
 const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, onStepChange }) => {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [showTour, setShowTour] = useState(false);
+  const [textSizeMultiplier, setTextSizeMultiplier] = useState(1);
   const auth = useAuth();
   const markOnboardingAsCompleteMutation = useMutation(api.auth.markOnboardingComplete);
   const posthog = usePostHog();
@@ -47,8 +48,24 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, onStepChang
   const popoverRef = useRef<HTMLDivElement>(null);
   const [actualPopoverHeight, setActualPopoverHeight] = useState(250);
 
+  const increaseTextSize = () => setTextSizeMultiplier(prev => prev * 1.1);
+  const decreaseTextSize = () => setTextSizeMultiplier(prev => prev / 1.1);
+
   // Memoize the steps array to prevent re-creation on every render
   const steps: OnboardingStep[] = useMemo(() => [
+    {
+      id: 'text_size_adjustment',
+      title: 'התאמת גודל טקסט',
+      content: (
+        <>
+          <p style={{ textAlign: 'right' }}>כדי לשפר את הקריאות, באפשרותך להתאים את גודל הטקסט באמצעות הכפתורים הבאים:</p>
+          <div style={{ display: 'flex', justifyContent: 'center', margin: '10px 0' }}>
+            <button onClick={increaseTextSize} style={{ padding: '8px 16px', margin: '0 5px', cursor: 'pointer' }}>הגדל טקסט</button>
+            <button onClick={decreaseTextSize} style={{ padding: '8px 16px', margin: '0 5px', cursor: 'pointer' }}>הקטן טקסט</button>
+          </div>
+        </>
+      ),
+    },
     {
       id: 'welcome',
       title: 'ברוכים הבאים ל"שאלת\'רב"!',
@@ -352,6 +369,8 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, onStepChang
   }
 
   const currentStep = steps[currentStepIndex];
+  const adjustedTitleFontSize = `${1.5 * textSizeMultiplier}rem`;
+  const adjustedContentFontSize = `${1 * textSizeMultiplier}rem`;
 
   return (
     <>
@@ -371,8 +390,8 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, onStepChang
       {showTour && currentStepIndex < steps.length && (
         <div ref={popoverRef} style={dynamicPopoverStyle}>
           {arrowStyle && <div style={arrowStyle} />} 
-          <h2 style={{ marginTop: 0, marginBottom: '16px', fontSize: '1.5rem' }}>{currentStep.title}</h2>
-          <div style={{ marginBottom: '24px', fontSize: '1rem', maxHeight: 'calc(70vh - 150px)', overflowY: 'auto' }}>{currentStep.content}</div>
+          <h2 style={{ marginTop: 0, marginBottom: '16px', fontSize: adjustedTitleFontSize }}>{currentStep.title}</h2>
+          <div style={{ marginBottom: '24px', fontSize: adjustedContentFontSize, maxHeight: 'calc(70vh - 150px)', overflowY: 'auto' }}>{currentStep.content}</div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', direction: 'rtl' }}>
             <div>
               {currentStepIndex > 0 && (
