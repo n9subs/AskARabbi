@@ -5,6 +5,7 @@ import { useAuth } from '../../providers/AuthProvider';
 import { useMutation } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import { usePostHog } from 'posthog-js/react';
+import { useAccessibility } from '../../providers/AccessibilityProvider';
 
 interface OnboardingStep {
   id: string;
@@ -21,10 +22,10 @@ interface OnboardingTourProps {
 const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, onStepChange }) => {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [showTour, setShowTour] = useState(false);
-  const [textSizeMultiplier, setTextSizeMultiplier] = useState(1);
   const auth = useAuth();
   const markOnboardingAsCompleteMutation = useMutation(api.auth.markOnboardingComplete);
   const posthog = usePostHog();
+  const { textSizeMultiplier, increaseTextSize, decreaseTextSize } = useAccessibility();
 
   const initialPopoverStyle: React.CSSProperties = useMemo(() => ({
     position: 'fixed',
@@ -47,9 +48,6 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, onStepChang
   const [arrowStyle, setArrowStyle] = useState<React.CSSProperties | null>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
   const [actualPopoverHeight, setActualPopoverHeight] = useState(250);
-
-  const increaseTextSize = () => setTextSizeMultiplier(prev => prev * 1.1);
-  const decreaseTextSize = () => setTextSizeMultiplier(prev => prev / 1.1);
 
   // Memoize the steps array to prevent re-creation on every render
   const steps: OnboardingStep[] = useMemo(() => [
@@ -108,7 +106,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, onStepChang
         content: <p style={{ textAlign: 'right' }}><br/>תוכל לצפות בשאלות ובתשובות הקודמות שלך בדף ההיסטוריה.<br/><br/></p>,
         targetElement: '#history-button', // Updated ID
     }
-  ], []); // Empty dependency array means steps are created once
+  ], [increaseTextSize, decreaseTextSize]); // Add context functions to dependency array
 
   useEffect(() => {
     if (auth.isLoading) {
@@ -369,8 +367,8 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, onStepChang
   }
 
   const currentStep = steps[currentStepIndex];
-  const adjustedTitleFontSize = `${1.5 * textSizeMultiplier}rem`;
-  const adjustedContentFontSize = `${1 * textSizeMultiplier}rem`;
+  const adjustedTitleFontSize = `1.5rem`;
+  const adjustedContentFontSize = `1rem`;
 
   return (
     <>
