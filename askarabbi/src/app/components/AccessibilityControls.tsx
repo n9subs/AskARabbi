@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useAccessibility } from '../../providers/AccessibilityProvider';
+import { useAccessibility } from '../providers/AccessibilityProvider';
 
 interface AccessibilityPopupProps {
   onClose: () => void;
@@ -18,7 +18,7 @@ const AccessibilityPopup: React.FC<AccessibilityPopupProps> = ({ onClose }) => {
       aria-labelledby="accessibility-popup-title"
     >
       <div className="flex justify-between items-center mb-3">
-        <h2 id="accessibility-popup-title" className="text-lg font-semibold text-gray-800">Accessibility Settings</h2>
+        <h2 id="accessibility-popup-title" className="text-lg font-semibold text-gray-800">הגדרות נגישות</h2>
         <button 
           onClick={onClose} 
           className="text-gray-500 hover:text-gray-700"
@@ -32,19 +32,19 @@ const AccessibilityPopup: React.FC<AccessibilityPopupProps> = ({ onClose }) => {
           onClick={increaseTextSize} 
           className="w-full text-left px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md text-sm"
         >
-          Increase Text Size
+          הגדל גודל טקסט
         </button>
         <button 
           onClick={decreaseTextSize} 
           className="w-full text-left px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md text-sm"
         >
-          Decrease Text Size
+          הקטן גודל טקסט
         </button>
         <button 
           onClick={() => setTextSizeMultiplier(1)} 
           className="w-full text-left px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md text-sm"
         >
-          Reset to Default
+          החזר לברירת מחדל
         </button>
       </div>
     </div>
@@ -87,7 +87,7 @@ const AccessibilityControls: React.FC = () => {
         aria-label="Open accessibility controls"
         aria-expanded={isPopupOpen}
       >
-        Aa
+        פ ף
       </button>
       {isPopupOpen && <AccessibilityPopup onClose={closePopup} />}
     </>

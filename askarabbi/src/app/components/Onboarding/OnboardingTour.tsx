@@ -25,7 +25,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, onStepChang
   const auth = useAuth();
   const markOnboardingAsCompleteMutation = useMutation(api.auth.markOnboardingComplete);
   const posthog = usePostHog();
-  const { textSizeMultiplier, increaseTextSize, decreaseTextSize } = useAccessibility();
+  const { increaseTextSize, decreaseTextSize } = useAccessibility();
 
   const initialPopoverStyle: React.CSSProperties = useMemo(() => ({
     position: 'fixed',
