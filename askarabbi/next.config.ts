@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://eu-assets.i.posthog.com https://static.cloudflareinsights.com https://pagead2.googlesyndication.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://pagead2.googlesyndication.com; font-src 'self' data:; connect-src 'self' eu.i.posthog.com eu-assets.i.posthog.com wss://*.convex.cloud https://ep1.adtrafficquality.google; frame-src https://googleads.g.doubleclick.net; frame-ancestors https://dave.is-a.dev;",
+            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://eu-assets.i.posthog.com https://static.cloudflareinsights.com https://pagead2.googlesyndication.com https://ep2.adtrafficquality.google; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://pagead2.googlesyndication.com; font-src 'self' data:; connect-src 'self' eu.i.posthog.com eu-assets.i.posthog.com wss://*.convex.cloud https://ep1.adtrafficquality.google; frame-src https://googleads.g.doubleclick.net; frame-ancestors https://dave.is-a.dev;",
           },
           {
             key: 'X-Content-Type-Options',
