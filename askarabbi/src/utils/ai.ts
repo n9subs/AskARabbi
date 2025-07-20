@@ -92,7 +92,7 @@ export async function queryAIAPI(question: string): Promise<StructuredAnswer> {
 
     const systemPromptText = getJewishSystemPrompt();
 
-    const modelName = 'gemini-2.5-flash-preview-04-17';
+    const modelName = process.env.GEMINI_MODEL_NAME || 'Gemini 2.0 Flash-Lite';
 
     const modelInstance = genAI.getGenerativeModel({
       model: modelName,
