@@ -65,20 +65,24 @@ export function getJewishSystemPrompt(): string {
 }
 
 export async function queryAIAPI(question: string): Promise<StructuredAnswer> {
+  console.log('[DEBUG] AI - Starting query for question length:', question.length);
   let lastError: Error | null = null;
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     const currentApiKey = getNextApiKey();
+    console.log('[DEBUG] AI - Attempt', attempt + 1, 'of', MAX_RETRIES, 'using API key index:', currentApiKeyIndex);
 
     try {
       genAI = new GoogleGenerativeAI(currentApiKey);
     } catch (e) {
       lastError = e instanceof Error ? e : new Error("Failed to instantiate GoogleGenAI client due to an unknown error.");
+      console.error('[DEBUG] AI - Failed to instantiate client:', lastError.message);
       if (attempt < MAX_RETRIES - 1) {
         const backoffDelay = INITIAL_BACKOFF_MS * Math.pow(2, attempt);
+        console.log('[DEBUG] AI - Backing off for', backoffDelay, 'ms');
         await new Promise(resolve => setTimeout(resolve, backoffDelay));
       }
-      continue; 
+      continue;
     }
 
     if (!genAI) {
@@ -92,7 +96,7 @@ export async function queryAIAPI(question: string): Promise<StructuredAnswer> {
 
     const systemPromptText = getJewishSystemPrompt();
 
-    const modelName = process.env.GEMINI_MODEL_NAME || 'Gemini-2.0-Flash-Lite';
+    const modelName = process.env.GEMINI_MODEL_NAME || 'gemini-2.0-flash-lite';
 
     const modelInstance = genAI.getGenerativeModel({
       model: modelName,
@@ -116,6 +120,9 @@ export async function queryAIAPI(question: string): Promise<StructuredAnswer> {
     const TIMEOUT_MS = 300000; // 5 minutes
 
     try {
+      console.log('[DEBUG] AI - Starting AI operation with timeout:', TIMEOUT_MS, 'ms');
+      const startTime = Date.now();
+      
       const aiOperation: Promise<GenerateContentResult> = modelInstance.generateContent({
         contents: requestContents,
         toolConfig: {
@@ -126,7 +133,10 @@ export async function queryAIAPI(question: string): Promise<StructuredAnswer> {
       });
 
       const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("AI_TIMEOUT")), TIMEOUT_MS)
+        setTimeout(() => {
+          console.log('[DEBUG] AI - Timeout reached after', TIMEOUT_MS, 'ms');
+          reject(new Error("AI_TIMEOUT"));
+        }, TIMEOUT_MS)
       );
 
       const result = await Promise.race([
@@ -134,23 +144,32 @@ export async function queryAIAPI(question: string): Promise<StructuredAnswer> {
         timeoutPromise
       ]) as GenerateContentResult;
 
+      const elapsedTime = Date.now() - startTime;
+      console.log('[DEBUG] AI - Response received after', elapsedTime, 'ms');
+
       if (!result || !result.response) {
-        throw new Error("AI operation returned no response."); 
+        throw new Error("AI operation returned no response.");
       }
 
       const response = result.response;
       const rawContent = response.text();
+      console.log('[DEBUG] AI - Raw content length:', rawContent.length);
 
       return parseAIResponse(rawContent);
 
     } catch (error: unknown) {
       lastError = error instanceof Error ? error : new Error('An unknown error occurred during Google GenAI SDK call.');
+      console.error('[DEBUG] AI - Error on attempt', attempt + 1, ':', lastError.message);
+      
       const isRateLimitError = (lastError.message.includes('429') || lastError.message.includes('Too Many Requests'));
+      const isTimeout = lastError.message === 'AI_TIMEOUT';
 
       if (isRateLimitError && attempt < MAX_RETRIES - 1) {
         const backoffDelay = INITIAL_BACKOFF_MS * Math.pow(2, attempt);
+        console.log('[DEBUG] AI - Rate limit hit, backing off for', backoffDelay, 'ms');
         await new Promise(resolve => setTimeout(resolve, backoffDelay));
-      } else if (!isRateLimitError) {
+      } else if (!isRateLimitError || isTimeout) {
+        console.log('[DEBUG] AI - Non-retryable error or timeout, throwing');
         throw lastError;
       }
     }
