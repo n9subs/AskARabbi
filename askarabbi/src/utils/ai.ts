@@ -15,7 +15,7 @@ let currentApiKeyIndex = 0;
 const apiKeyString = process.env.GEMINI_API_KEYS; // Changed from GEMINI_API_KEY
 
 if (apiKeyString) {
-  apiKeys = apiKeyString.split(',').map(key => key.trim()).filter(key => key.length > 0);
+  apiKeys = apiKeyString.split(',').map((key: string) => key.trim()).filter((key: string) => key.length > 0);
 }
 
 if (apiKeys.length === 0) {
@@ -92,7 +92,7 @@ export async function queryAIAPI(question: string): Promise<StructuredAnswer> {
 
     const systemPromptText = getJewishSystemPrompt();
 
-    const modelName = process.env.GEMINI_MODEL_NAME || 'Gemini 2.0 Flash-Lite';
+    const modelName = process.env.GEMINI_MODEL_NAME || 'Gemini-2.0-Flash-Lite';
 
     const modelInstance = genAI.getGenerativeModel({
       model: modelName,
