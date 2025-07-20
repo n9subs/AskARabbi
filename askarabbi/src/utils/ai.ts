@@ -15,7 +15,7 @@ let currentApiKeyIndex = 0;
 const apiKeyString = process.env.GEMINI_API_KEYS; // Changed from GEMINI_API_KEY
 
 if (apiKeyString) {
-  apiKeys = apiKeyString.split(',').map(key => key.trim()).filter(key => key.length > 0);
+  apiKeys = apiKeyString.split(',').map((key: string) => key.trim()).filter((key: string) => key.length > 0);
 }
 
 if (apiKeys.length === 0) {
