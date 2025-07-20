@@ -68,6 +68,14 @@ export async function GET(request: NextRequest) {
     }
 
     // Call Convex mutation to sign in/up with Google
+    console.log('Calling Convex signInWithGoogle mutation with:', {
+      googleId,
+      email,
+      name,
+      profilePicture: picture,
+      isSignUp: mode === 'signup',
+    });
+
     const result = await convex.mutation(api.auth.signInWithGoogle, {
       googleId,
       email,
@@ -76,20 +84,30 @@ export async function GET(request: NextRequest) {
       isSignUp: mode === 'signup',
     });
 
+    console.log('Convex mutation result:', result);
+
+    if (!result || !result.userId) {
+      console.error('Convex mutation failed - no userId returned:', result);
+      return NextResponse.redirect(
+        `${process.env.NEXT_PUBLIC_APP_URL}/auth/sign-in?error=auth_failed`
+      );
+    }
+
     // Create response with redirect
     const response = NextResponse.redirect(
       `${process.env.NEXT_PUBLIC_APP_URL}/?google_auth=success`
     );
 
-    // Set a cookie with the user ID (you might want to use a more secure session management)
+    // Set a cookie with the user ID (removed httpOnly to allow client-side access)
     response.cookies.set('userId', result.userId, {
-      httpOnly: true,
+      httpOnly: false, // Allow client-side access for OAuth flow
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7, // 7 days
       path: '/',
     });
 
+    console.log('OAuth callback successful, userId:', result.userId);
     return response;
   } catch (error) {
     console.error('Google OAuth error:', error);

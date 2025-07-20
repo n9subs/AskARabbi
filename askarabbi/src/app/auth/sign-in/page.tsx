@@ -30,6 +30,32 @@ function SignInClientLogic() {
     if (searchParams.get("registered") === "true") {
       setSuccessMessage("הרשמה הושלמה בהצלחה. יש לאמת את כתובת האימייל שלך לפני ההתחברות. בדוק את תיבת הדואר הנכנס.");
     }
+    
+    // Handle OAuth errors
+    const oauthError = searchParams.get("error");
+    if (oauthError) {
+      const getOAuthErrorMessage = (error: string) => {
+        switch (error) {
+          case 'no_code':
+            return 'שגיאה בהתחברות עם Google - קוד אימות חסר.';
+          case 'no_id_token':
+            return 'שגיאה בהתחברות עם Google - אסימון זהות חסר.';
+          case 'invalid_token':
+            return 'שגיאה בהתחברות עם Google - אסימון לא תקין.';
+          case 'no_email':
+            return 'שגיאה בהתחברות עם Google - כתובת אימייל חסרה.';
+          case 'oauth_failed':
+            return 'שגיאה בהתחברות עם Google. אנא נסה שוב.';
+          case 'auth_failed':
+            return 'שגיאה באימות. אנא נסה שוב.';
+          case 'oauth_no_cookie':
+            return 'שגיאה בהתחברות עם Google - מידע הפעלה חסר.';
+          default:
+            return 'שגיאה בהתחברות עם Google. אנא נסה שוב.';
+        }
+      };
+      setError(getOAuthErrorMessage(oauthError));
+    }
   }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
