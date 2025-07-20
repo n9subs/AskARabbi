@@ -5,6 +5,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import { usePostHog } from 'posthog-js/react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 // Define limits (can be shared or fetched from config)
 const ANON_LIMIT = 5;
@@ -47,6 +48,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   } | null>(null);
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState<boolean | null>(null);
   const posthog = usePostHog();
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   const signUpMutation = useMutation(api.auth.signUp);
   const loginMutation = useMutation(api.auth.login);
@@ -58,13 +61,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   useEffect(() => {
+    // Check for Google OAuth callback
+    const googleAuth = searchParams.get('google_auth');
+    if (googleAuth === 'success') {
+      // Check cookie for userId (set by callback route)
+      const cookieUserId = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('userId='))
+        ?.split('=')[1];
+      
+      if (cookieUserId) {
+        setUserId(cookieUserId as Id<"users">);
+        localStorage.setItem("userId", cookieUserId);
+        // Clear the cookie after storing in localStorage
+        document.cookie = "userId=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        // Remove the query parameter
+        router.replace('/');
+        return;
+      }
+    }
+
     const storedUserId = localStorage.getItem("userId");
     if (storedUserId) {
       setUserId(storedUserId as Id<"users">);
     } else {
       setIsLoading(false);
     }
-  }, []);
+  }, [searchParams, router]);
 
   useEffect(() => {
     let currentLimit = ANON_LIMIT;
