@@ -3,11 +3,13 @@
 import { Geist, Geist_Mono, Rubik } from "next/font/google";
 import "./globals.css";
 import { PostHogProvider } from "./providers";
-import { AuthProvider } from "./providers/AuthProvider";
+import { AuthProviderWrapper } from "./providers/AuthProviderWrapper";
 import ConvexClientProvider from "./providers/ConvexClientProvider";
 import { AccessibilityProvider, useAccessibility } from "./providers/AccessibilityProvider";
 import React, { useEffect } from "react"; // Added useEffect
 import AccessibilityControls from "./components/AccessibilityControls"; // Import AccessibilityControls
+import GoogleScripts from "./components/GoogleScripts";
+import ConsentBanner from "./components/ConsentBanner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,12 +36,16 @@ export default function RootLayout({
     <html lang="he" dir="rtl">
       <head>
         <link rel="manifest" href="/manifest.json" />
+        <GoogleScripts
+          adsenseId={process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_ID}
+          analyticsId={process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID}
+        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${hebrewFont.variable} antialiased font-hebrew`}
       >
         <ConvexClientProvider>
-          <AuthProvider>
+          <AuthProviderWrapper>
             <PostHogProvider>
               <AccessibilityProvider>
                 <GlobalStyleApplicator>
@@ -47,7 +53,7 @@ export default function RootLayout({
                 </GlobalStyleApplicator>
               </AccessibilityProvider>
             </PostHogProvider>
-          </AuthProvider>
+          </AuthProviderWrapper>
         </ConvexClientProvider>
       </body>
     </html>
@@ -74,6 +80,7 @@ const GlobalStyleApplicator: React.FC<{ children: React.ReactNode }> = ({ childr
     <>
       {children}
       <AccessibilityControls />
+      <ConsentBanner />
     </>
   );
 };

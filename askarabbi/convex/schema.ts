@@ -19,7 +19,13 @@ export default defineSchema({
       timestamp: v.number(),
     })),
     hasCompletedOnboarding: v.optional(v.boolean()),
-  }),
+    // OAuth fields
+    googleId: v.optional(v.string()),
+    authProvider: v.optional(v.union(v.literal("email"), v.literal("google"))),
+    profilePicture: v.optional(v.string()),
+  })
+    .index("by_email", ["email"])
+    .index("by_google_id", ["googleId"]),
   history: defineTable({
     userId: v.id("users"),
     question: v.string(),

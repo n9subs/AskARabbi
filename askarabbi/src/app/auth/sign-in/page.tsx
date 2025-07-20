@@ -7,6 +7,7 @@ import { useAuth } from "../../providers/AuthProvider";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from 'next/link';
 import { usePostHog } from 'posthog-js/react';
+import GoogleSignInButton from '../../components/GoogleSignInButton';
 
 function SignInClientLogic() {
   const [email, setEmail] = useState("");
@@ -158,6 +159,18 @@ function SignInClientLogic() {
                 "התחבר"
               )}
             </button>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">או</span>
+              </div>
+            </div>
+
+            <GoogleSignInButton mode="signin" disabled={loadingAction !== null} />
+
             <button
               type="button"
               onClick={handleAnonymousSignIn}

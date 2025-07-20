@@ -218,4 +218,97 @@ export const markOnboardingComplete = mutation({
     await ctx.db.patch(user._id, { hasCompletedOnboarding: true });
     return { success: true };
   },
-}); 
+});
+
+// Google OAuth sign in/up
+export const signInWithGoogle = mutation({
+  args: {
+    googleId: v.string(),
+    email: v.string(),
+    name: v.optional(v.string()),
+    profilePicture: v.optional(v.string()),
+    isSignUp: v.boolean(), // Indicates if this is from sign-up page
+  },
+  handler: async (ctx, args) => {
+    // Check if user exists with this Google ID
+    let user = await ctx.db
+      .query("users")
+      .withIndex("by_google_id", (q) => q.eq("googleId", args.googleId))
+      .first();
+
+    if (user) {
+      // Existing Google user - update last login
+      await ctx.db.patch(user._id, {
+        lastLoginAt: Date.now(),
+        profilePicture: args.profilePicture, // Update profile picture if changed
+      });
+      return { userId: user._id, isNewUser: false };
+    }
+
+    // Check if user exists with this email (might have signed up with email/password)
+    const emailUser = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", args.email))
+      .first();
+
+    if (emailUser) {
+      if (emailUser.isAnonymous) {
+        // Convert anonymous user to Google user
+        await ctx.db.patch(emailUser._id, {
+          googleId: args.googleId,
+          email: args.email,
+          name: args.name || emailUser.name,
+          isAnonymous: false,
+          isEmailVerified: true, // Google emails are pre-verified
+          authProvider: "google",
+          profilePicture: args.profilePicture,
+          lastLoginAt: Date.now(),
+        });
+        return { userId: emailUser._id, isNewUser: false };
+      } else if (!emailUser.googleId) {
+        // User exists with email/password - link Google account
+        await ctx.db.patch(emailUser._id, {
+          googleId: args.googleId,
+          authProvider: "google",
+          isEmailVerified: true, // Mark as verified since Google verified it
+          profilePicture: args.profilePicture,
+          lastLoginAt: Date.now(),
+        });
+        return { userId: emailUser._id, isNewUser: false };
+      } else {
+        // This shouldn't happen - email exists with different Google ID
+        throw new ConvexError("כתובת האימייל הזו כבר משויכת לחשבון Google אחר.");
+      }
+    }
+
+    // Create new user
+    const newUserId = await ctx.db.insert("users", {
+      googleId: args.googleId,
+      email: args.email,
+      name: args.name,
+      isAnonymous: false,
+      isEmailVerified: true, // Google emails are pre-verified
+      authProvider: "google",
+      profilePicture: args.profilePicture,
+      lastLoginAt: Date.now(),
+      termsAcceptedAt: Date.now(),
+      dailyQuestionCount: 0,
+      lastQuestionDate: 0,
+    });
+
+    return { userId: newUserId, isNewUser: true };
+  },
+});
+
+// Verify Google token (to be called from API route)
+export const verifyGoogleToken = mutation({
+  args: {
+    idToken: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // This will be called from the API route after verifying the token
+    // The actual verification happens in the API route using google-auth-library
+    // This mutation just returns success to confirm the backend can be reached
+    return { success: true };
+  },
+});

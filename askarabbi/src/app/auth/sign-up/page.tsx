@@ -7,6 +7,7 @@ import { useAuth } from "../../providers/AuthProvider";
 import { useRouter } from "next/navigation";
 import Link from 'next/link';
 import { usePostHog } from 'posthog-js/react';
+import GoogleSignInButton from '../../components/GoogleSignInButton';
 
 export default function SignUpPage() {
   const [email, setEmail] = useState("");
@@ -138,7 +139,7 @@ export default function SignUpPage() {
             </label>
           </div>
 
-          <div className="mt-6">
+          <div className="mt-6 space-y-3">
             <button
               type="submit"
               disabled={isLoadingState || !termsAccepted}
@@ -150,6 +151,17 @@ export default function SignUpPage() {
                 "הרשמה"
               )}
             </button>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">או</span>
+              </div>
+            </div>
+
+            <GoogleSignInButton mode="signup" disabled={isLoadingState || !termsAccepted} />
           </div>
         </form>
 
