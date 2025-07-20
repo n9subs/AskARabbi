@@ -64,13 +64,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Check for Google OAuth callback
     const googleAuth = searchParams.get('google_auth');
     if (googleAuth === 'success') {
+      console.log('Google OAuth callback detected');
+      
       // Check cookie for userId (set by callback route)
+      const allCookies = document.cookie;
+      console.log('All cookies:', allCookies);
+      
       const cookieUserId = document.cookie
         .split('; ')
         .find(row => row.startsWith('userId='))
         ?.split('=')[1];
       
+      console.log('Extracted cookieUserId:', cookieUserId);
+      
       if (cookieUserId) {
+        console.log('Setting userId from OAuth cookie:', cookieUserId);
         setUserId(cookieUserId as Id<"users">);
         localStorage.setItem("userId", cookieUserId);
         // Clear the cookie after storing in localStorage
@@ -78,11 +86,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Remove the query parameter
         router.replace('/');
         return;
+      } else {
+        console.error('OAuth callback successful but no userId cookie found');
+        // Redirect to sign-in with error
+        router.replace('/auth/sign-in?error=oauth_no_cookie');
+        return;
       }
     }
 
     const storedUserId = localStorage.getItem("userId");
     if (storedUserId) {
+      console.log('Loading user from localStorage:', storedUserId);
       setUserId(storedUserId as Id<"users">);
     } else {
       setIsLoading(false);
