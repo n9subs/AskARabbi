@@ -36,6 +36,7 @@ export default function RootLayout({
     <html lang="he" dir="rtl">
       <head>
         <link rel="manifest" href="/manifest.json" />
+        {/* GoogleScripts now automatically detects page context to comply with AdSense policies */}
         <GoogleScripts
           adsenseId={process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_ID}
           analyticsId={process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID}
