@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AdSense Policy Test</title>
+    <script>
+        // Simulate the AdSense policy logic
+        function shouldShowAds(pathname) {
+            const excludedPaths = [
+                '/auth',
+                '/error', 
+                '/404',
+                '/terms',
+                '/privacy',
+                '/api'
+            ];
+            
+            return !excludedPaths.some(excluded => pathname.startsWith(excluded));
+        }
+        
+        function testAdSensePolicy() {
+            const testPaths = [
+                '/',           // Should show ads (content-rich)
+                '/history',    // Should show ads (content-rich)  
+                '/qualified',  // Should show ads (content-rich)
+                '/auth/sign-in', // Should NOT show ads (auth)
+                '/auth/sign-up', // Should NOT show ads (auth)
+                '/terms',      // Should NOT show ads (legal)
+                '/privacy',    // Should NOT show ads (legal)
+                '/error',      // Should NOT show ads (error)
+                '/api/question' // Should NOT show ads (API)
+            ];
+            
+            console.log('AdSense Policy Test Results:');
+            console.log('=================================');
+            
+            testPaths.forEach(path => {
+                const shouldShow = shouldShowAds(path);
+                const status = shouldShow ? 'SHOW ADS ✅' : 'BLOCK ADS ❌';
+                console.log(`${path.padEnd(15)} → ${status}`);
+            });
+        }
+        
+        // Test when page loads
+        window.addEventListener('DOMContentLoaded', testAdSensePolicy);
+    </script>
+</head>
+<body>
+    <h1>AdSense Policy Test</h1>
+    <p>Open browser console to see test results</p>
+    
+    <h2>Test Summary</h2>
+    <p>The AdSense policy implementation should:</p>
+    <ul>
+        <li><strong>ALLOW ads</strong> on content-rich pages: /, /history, /qualified</li>
+        <li><strong>BLOCK ads</strong> on auth pages: /auth/sign-in, /auth/sign-up</li>
+        <li><strong>BLOCK ads</strong> on legal pages: /terms, /privacy</li>
+        <li><strong>BLOCK ads</strong> on system pages: /error, /404, /api/*</li>
+    </ul>
+    
+    <h2>Implementation Files Modified</h2>
+    <ul>
+        <li><code>src/utils/adsensePolicy.ts</code> - Core policy logic</li>
+        <li><code>src/app/components/GoogleScripts.tsx</code> - Conditional AdSense loading</li>
+        <li><code>src/app/layout.tsx</code> - Documentation added</li>
+        <li><code>ADSENSE_POLICY_COMPLIANCE.md</code> - Full documentation</li>
+    </ul>
+</body>
+</html>
