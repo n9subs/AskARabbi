@@ -82,22 +82,12 @@ export default function CallToAction() {
 
         {/* Why OAuth? */}
         <div className="mt-16 bg-white/5 backdrop-blur-sm rounded-xl p-8 max-w-3xl mx-auto">
-          <h3 className="text-2xl font-bold mb-6">למה נדרש חשבון משתמש?</h3>
+          <h3 className="text-2xl font-bold mb-6">למה לפתוח חשבון משתמש?</h3>
           <div className="grid md:grid-cols-2 gap-6 text-right">
-            <div>
-              <h4 className="font-bold mb-3 text-lg">🛡️ הגנה וביטחון</h4>
-              <ul className="space-y-2 text-sm opacity-90">
-                <li>• מניעת שימוש לרעה במערכת</li>
-                <li>• הגבלת קצב שאלות להבטחת איכות</li>
-                <li>• שמירה על פרטיות המשתמשים</li>
-              </ul>
-            </div>
             <div>
               <h4 className="font-bold mb-3 text-lg">⚡ שירות משופר</h4>
               <ul className="space-y-2 text-sm opacity-90">
                 <li>• שמירת היסטוריית השאלות שלך</li>
-                <li>• התאמה אישית לסגנון הלימוד</li>
-                <li>• מעקב אחר נושאים מעניינים</li>
               </ul>
             </div>
           </div>
